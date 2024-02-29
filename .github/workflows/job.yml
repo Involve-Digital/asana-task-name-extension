@@ -1,5 +1,5 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+name: Build and deploy to google
+run-name: ${{ github.actor }} Building and deploying to Google extension store 🚀
 on:
   push:
     branches:
