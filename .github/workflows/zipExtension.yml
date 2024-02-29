@@ -28,8 +28,6 @@ jobs:
     name: Upload extension
     runs-on: ubuntu-latest
     needs: build-chrome-extension
-    env:
-      EXTENSION_ID: ${{ secrets.EXTENSION_ID }}
 
     steps:
       - uses: actions/setup-node@v2-beta
