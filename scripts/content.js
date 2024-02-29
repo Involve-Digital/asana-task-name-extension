@@ -33,6 +33,7 @@ function getSvgCross () {
     '<g><path style="opacity:0.979" fill="#e80736" d="M 6.5,37.5 C 17.8333,37.5 29.1667,37.5 40.5,37.5C 36.5382,43.6066 30.8715,46.2733 23.5,45.5C 16.0552,46.2568 10.3885,43.5901 6.5,37.5 Z"/></g>\n' +
     '</svg>\n';
 }
+let timeout = null;
 
 function extractTaskInfo() {
   const taskTitleElement = document.querySelector('textarea.BaseTextarea.simpleTextarea--dynamic.simpleTextarea.AutogrowTextarea-input');
@@ -61,7 +62,9 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 });
 
 const initButton = () => {
-  setTimeout(function () {
+  clearTimeout(timeout);
+
+  timeout = setTimeout(function () {
     const heading = document.querySelector('div.TaskPaneToolbarAnimation-statusButtonRow.TaskPaneToolbarAnimation-row.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-start');
 
     if (heading){
