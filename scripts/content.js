@@ -62,7 +62,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 
 const initButton = () => {
   setTimeout(function () {
-    const heading = document.querySelector('div.TaskPaneToolbarAnimation-statusButtonRow.TaskPaneToolbarAnimation-row--updatedResponsivePadding.TaskPaneToolbarAnimation-row.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-start');
+    const heading = document.querySelector('div.TaskPaneToolbarAnimation-statusButtonRow.TaskPaneToolbarAnimation-row.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-start');
 
     if (heading){
       const button = document.createElement('button');
