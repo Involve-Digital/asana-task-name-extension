@@ -1,4 +1,4 @@
-function getSvgCheck () {
+function getSvgCheck() {
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n' +
     '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="48px" height="48px" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">\n' +
@@ -9,7 +9,7 @@ function getSvgCheck () {
     '</svg>\n';
 }
 
-function getSvgCopy () {
+function getSvgCopy() {
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n' +
     '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="48px" height="48px" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">\n' +
@@ -20,7 +20,7 @@ function getSvgCopy () {
     '</svg>\n';
 }
 
-function getSvgCross () {
+function getSvgCross() {
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n' +
     '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="48px" height="48px" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">\n' +
@@ -33,19 +33,20 @@ function getSvgCross () {
     '<g><path style="opacity:0.979" fill="#e80736" d="M 6.5,37.5 C 17.8333,37.5 29.1667,37.5 40.5,37.5C 36.5382,43.6066 30.8715,46.2733 23.5,45.5C 16.0552,46.2568 10.3885,43.5901 6.5,37.5 Z"/></g>\n' +
     '</svg>\n';
 }
-let timeout = null;
 
 function extractTaskInfo() {
-  const taskTitleElement = document.querySelector('textarea.BaseTextarea.simpleTextarea--dynamic.simpleTextarea.AutogrowTextarea-input');
-  const parentTaskElements = document.querySelectorAll('div.Breadcrumb.TaskAncestryBreadcrumb.TaskAncestry-taskAncestryBreadcrumb > a');
+  const taskTitleElement = document.querySelector(
+    'textarea.BaseTextarea.simpleTextarea--dynamic.simpleTextarea.AutogrowTextarea-input');
+  const parentTaskElements = document.querySelectorAll(
+    'div.Breadcrumb.TaskAncestryBreadcrumb.TaskAncestry-taskAncestryBreadcrumb > a');
 
   if (taskTitleElement) {
     const taskName = taskTitleElement.textContent.trim();
     const names = [];
 
     parentTaskElements.forEach((parent) => {
-      names.push(parent.textContent.trim())
-    })
+      names.push(parent.textContent.trim());
+    });
 
     names.push(taskName);
 
@@ -55,62 +56,71 @@ function extractTaskInfo() {
   return null;
 }
 
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-  if (message.action === "extractTaskInfo") {
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  if (message.action === 'extractTaskInfo') {
     extractTaskInfo();
   }
 });
 
-const initButton = () => {
-  clearTimeout(timeout);
+/** @param {Node} elementToAppendButton */
+const appendCopyButton = (elementToAppendButton) => {
+  const button = document.createElement('button');
+  button.innerHTML = getSvgCopy();
 
-  timeout = setTimeout(function () {
-    const heading = document.querySelector('div.TaskPaneToolbarAnimation-statusButtonRow.TaskPaneToolbarAnimation-row.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-start');
+  button.onclick = () => {
+    const taskInfo = extractTaskInfo();
 
-    if (heading){
-      const button = document.createElement('button');
-      button.innerHTML = getSvgCopy();
+    if (taskInfo) {
+      navigator.clipboard.writeText(taskInfo)
+        .then(() => {
+          button.innerHTML = getSvgCheck();
 
-      button.onclick = () => {
-        const taskInfo = extractTaskInfo();
+          setTimeout(function () {
+            button.innerHTML = getSvgCopy();
+          }, 5000);
 
-        if (taskInfo) {
-          navigator.clipboard.writeText(taskInfo)
-            .then(() => {
-              button.innerHTML = getSvgCheck();
+          console.log('Task info copied to clipboard:', taskInfo);
+        })
+        .catch(err => {
+          button.innerHTML = getSvgCross();
 
-              setTimeout(function () {
-                button.innerHTML = getSvgCopy();
-              }, 5000);
-              console.log('Task info copied to clipboard:', taskInfo);
-            })
-            .catch(err => {
-              button.innerHTML = getSvgCross();
+          setTimeout(function () {
+            button.innerHTML = getSvgCopy();
+          }, 5000);
 
-              setTimeout(function () {
-                button.innerHTML = getSvgCopy();
-              }, 5000);
-              console.error('Failed to copy task info to clipboard:', err);
-            });
-        }
-      };
-
-      heading.appendChild(button);
+          console.error('Failed to copy task info to clipboard:', err);
+        });
     }
-  }, 2000);
-}
+  };
+
+  elementToAppendButton.appendChild(button);
+};
+
+/** @param {MutationRecord} mutation */
+const addCopyButtonAfterMutation = (mutation) => {
+  const matchingElementsForCopyButton = Array.from(mutation.addedNodes)
+    .filter(addedNode => typeof addedNode.querySelector === 'function')
+    .map(addedNode => addedNode.querySelector(
+      'div.TaskPaneToolbarAnimation-statusButtonRow.TaskPaneToolbarAnimation-row.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-start'))
+    .filter(addedNode => addedNode);
+
+  if (!matchingElementsForCopyButton.length) {
+    return;
+  }
+
+  matchingElementsForCopyButton.forEach(appendCopyButton);
+};
+
+/** @param {MutationRecord[]} mutations */
+const handleBodyMutation = (mutations) => {
+  mutations.forEach((mutation) => {
+    addCopyButtonAfterMutation(mutation);
+  });
+};
 
 // Extract task info and send to background script when page is loaded
 window.addEventListener('load', () => {
-  setTimeout(function () {
-    initButton()
-    let currentURL = window.location.href;
+  const observer = new MutationObserver(handleBodyMutation);
 
-    setInterval(function() {
-      if (window.location.href !== currentURL) {
-        initButton()
-        currentURL = window.location.href;
-      }
-    }, 1000);
-  }, 1000);
+  observer.observe(document.body, { childList: true, subtree: true });
 });
