@@ -163,7 +163,10 @@ function pinToTop() {
     }
 
     if (commentTextDiv && commentButtonDiv) {
-      if (commentTextDiv.textContent.includes(MR_DELIMITERS)) {
+      const commentText = commentTextDiv.textContent;
+      const isIncluded = MR_DELIMITERS.some(delimiter => commentText.includes(delimiter));
+
+      if (isIncluded) {
         commentButtonDiv.click();
 
         const pinToTop = document.querySelector(PIN_TO_TOP_BUTTON_SELECTOR);
