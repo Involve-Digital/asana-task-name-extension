@@ -44,7 +44,7 @@ function getSvgCross() {
     '</svg>\n';
 }
 
-function extractTaskInfo() {
+function extractTaskInfo(onlyChildTask) {
   const taskTitleElement = document.querySelector(TASK_TITLE_SELECTOR);
   const parentTaskElements = document.querySelectorAll(PARENT_TASK_TITLE_SELECTOR);
 
@@ -52,9 +52,11 @@ function extractTaskInfo() {
     const taskName = taskTitleElement.textContent.trim();
     const names = [];
 
-    parentTaskElements.forEach((parent) => {
-      names.push(parent.textContent.trim());
-    });
+    if (!onlyChildTask) {
+      parentTaskElements.forEach((parent) => {
+        names.push(parent.textContent.trim());
+      });
+    }
 
     names.push(taskName);
 
@@ -75,8 +77,8 @@ const appendCopyButton = (elementToAppendButton) => {
   const button = document.createElement('button');
   button.innerHTML = getSvgCopy();
 
-  button.onclick = () => {
-    const taskInfo = extractTaskInfo();
+  button.onclick = (e) => {
+    const taskInfo = extractTaskInfo(e.shiftKey);
 
     if (taskInfo) {
       navigator.clipboard.writeText(taskInfo)
