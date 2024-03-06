@@ -1,3 +1,12 @@
+const TASK_TITLE_SELECTOR = 'textarea.BaseTextarea.simpleTextarea--dynamic.simpleTextarea.AutogrowTextarea-input';
+const PARENT_TASK_TITLE_SELECTOR = 'div.Breadcrumb.TaskAncestryBreadcrumb.TaskAncestry-taskAncestryBreadcrumb > a';
+const HEADING_SELECTOR = 'div.TaskPaneToolbarAnimation-statusButtonRow.TaskPaneToolbarAnimation-row.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-start';
+const ALL_COMMENTS_SELECTOR = 'div.FeedBlockStory.TaskStoryFeed-blockStory';
+const COMMENT_TEXT_DIV_SELECTOR = 'div.TypographyPresentation.TypographyPresentation--m.RichText3-paragraph--withVSpacingNormal.RichText3-paragraph';
+const COMMENT_BUTTON_DIV_SELECTOR = 'div.ThemeableIconButtonPresentation--isEnabled.ThemeableIconButtonPresentation.ThemeableIconButtonPresentation--medium.SubtleIconButton--standardTheme.SubtleIconButton.BlockStoryDropdown.FeedBlockStory-actionsDropdownButton';
+const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentation--overflowTruncate.TypographyPresentation--m.LeftIconItemStructure-label';
+const COMMENT_SECTION_CLASS_NAME = 'TaskStoryFeed';
+
 function getSvgCheck() {
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n' +
@@ -35,10 +44,8 @@ function getSvgCross() {
 }
 
 function extractTaskInfo() {
-  const taskTitleElement = document.querySelector(
-    'textarea.BaseTextarea.simpleTextarea--dynamic.simpleTextarea.AutogrowTextarea-input');
-  const parentTaskElements = document.querySelectorAll(
-    'div.Breadcrumb.TaskAncestryBreadcrumb.TaskAncestry-taskAncestryBreadcrumb > a');
+  const taskTitleElement = document.querySelector(TASK_TITLE_SELECTOR);
+  const parentTaskElements = document.querySelectorAll(PARENT_TASK_TITLE_SELECTOR);
 
   if (taskTitleElement) {
     const taskName = taskTitleElement.textContent.trim();
@@ -100,8 +107,7 @@ const appendCopyButton = (elementToAppendButton) => {
 const addCopyButtonAfterMutation = (mutation) => {
   const matchingElementsForCopyButton = Array.from(mutation.addedNodes)
     .filter(addedNode => typeof addedNode.querySelector === 'function')
-    .map(addedNode => addedNode.querySelector(
-      'div.TaskPaneToolbarAnimation-statusButtonRow.TaskPaneToolbarAnimation-row.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-start'))
+    .map(addedNode => addedNode.querySelector(HEADING_SELECTOR))
     .filter(addedNode => addedNode);
 
   if (!matchingElementsForCopyButton.length) {
@@ -111,10 +117,20 @@ const addCopyButtonAfterMutation = (mutation) => {
   matchingElementsForCopyButton.forEach(appendCopyButton);
 };
 
+/** @param {MutationRecord} mutation */
+const checkComments = (mutation) => {
+  if (!mutation.target.classList.contains(COMMENT_SECTION_CLASS_NAME)) {
+    return;
+  }
+
+  pinToTop();
+};
+
 /** @param {MutationRecord[]} mutations */
 const handleBodyMutation = (mutations) => {
   mutations.forEach((mutation) => {
     addCopyButtonAfterMutation(mutation);
+    checkComments(mutation);
   });
 };
 
@@ -122,5 +138,39 @@ const handleBodyMutation = (mutations) => {
 window.addEventListener('load', () => {
   const observer = new MutationObserver(handleBodyMutation);
 
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
 });
+
+function pinToTop() {
+  const allComments = document.querySelectorAll(ALL_COMMENTS_SELECTOR);
+
+  allComments.forEach((comment) => {
+    const commentTextDiv = comment.querySelector(COMMENT_TEXT_DIV_SELECTOR);
+    const commentButtonDiv = comment.querySelector(COMMENT_BUTTON_DIV_SELECTOR);
+
+    if (!commentTextDiv) {
+      console.log('Comment not found on this task');
+    }
+
+    if (!commentButtonDiv) {
+      console.log('Comment action button not found on this task');
+    }
+
+    if (commentTextDiv && commentButtonDiv) {
+      if (commentTextDiv.textContent.includes('MR: ')) {
+        commentButtonDiv.click();
+
+        const pinToTop = document.querySelector(PIN_TO_TOP_BUTTON_SELECTOR);
+
+        if (pinToTop && pinToTop.textContent === 'Pin to top') {
+          pinToTop.click();
+        } else {
+          commentButtonDiv.click();
+        }
+      }
+    }
+  });
+}
