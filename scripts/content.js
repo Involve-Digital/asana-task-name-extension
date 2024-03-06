@@ -6,6 +6,7 @@ const COMMENT_TEXT_DIV_SELECTOR = 'div.TypographyPresentation.TypographyPresenta
 const COMMENT_BUTTON_DIV_SELECTOR = 'div.ThemeableIconButtonPresentation--isEnabled.ThemeableIconButtonPresentation.ThemeableIconButtonPresentation--medium.SubtleIconButton--standardTheme.SubtleIconButton.BlockStoryDropdown.FeedBlockStory-actionsDropdownButton';
 const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentation--overflowTruncate.TypographyPresentation--m.LeftIconItemStructure-label';
 const COMMENT_SECTION_CLASS_NAME = 'TaskStoryFeed';
+const MR_DELIMITERS = ['MR: ', 'MR - '];
 
 function getSvgCheck() {
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -160,7 +161,7 @@ function pinToTop() {
     }
 
     if (commentTextDiv && commentButtonDiv) {
-      if (commentTextDiv.textContent.includes('MR: ')) {
+      if (commentTextDiv.textContent.includes(MR_DELIMITERS)) {
         commentButtonDiv.click();
 
         const pinToTop = document.querySelector(PIN_TO_TOP_BUTTON_SELECTOR);
