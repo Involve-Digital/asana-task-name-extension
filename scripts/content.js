@@ -49,7 +49,7 @@ function extractTaskInfo() {
 
     names.push(taskName);
 
-    return names.join(' - ');
+    return names.join(' || ');
   }
 
   return null;
