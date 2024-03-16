@@ -3,7 +3,7 @@
   "name": "Asana task name extension",
   "description": "Asana task name extension",
   "version": "1.6",
-  "permissions": ["clipboardWrite", "storage"],
+  "permissions": ["clipboardWrite"],
   "action": {
     "default_popup": "/popup/hello.html",
     "default_icon": {
