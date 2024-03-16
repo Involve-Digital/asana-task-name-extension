@@ -29,15 +29,15 @@
   "commands": {
     "copyTaskNameParentIncluded": {
       "suggested_key": {
-        "default": "Ctrl+Shift+U",
-        "mac": "Command+Shift+U"
+        "default": "Ctrl+U",
+        "mac": "Command+U"
       },
       "description": "Copy task name with parent tasks names"
     },
     "copyOnlyTaskName": {
       "suggested_key": {
-        "default": "Ctrl+U",
-        "mac": "Command+U"
+        "default": "Ctrl+Shift+U",
+        "mac": "Command+Shift+U"
       },
       "description": "Copy task name without parent tasks names"
     }
