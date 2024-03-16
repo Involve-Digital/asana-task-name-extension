@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Asana task name extension",
   "description": "Asana task name extension",
-  "version": "1.5",
-  "permissions": ["clipboardWrite"],
+  "version": "1.6",
+  "permissions": ["clipboardWrite", "storage"],
   "action": {
     "default_popup": "/popup/hello.html",
     "default_icon": {
@@ -22,5 +22,24 @@
       "matches": ["*://app.asana.com/*"],
       "js": ["/scripts/content.js"]
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "/scripts/background.js"
+  },
+  "commands": {
+    "copyTaskNameParentIncluded": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+U",
+        "mac": "Command+Shift+U"
+      },
+      "description": "Copy task name with parent tasks names"
+    },
+    "copyOnlyTaskName": {
+      "suggested_key": {
+        "default": "Ctrl+U",
+        "mac": "Command+U"
+      },
+      "description": "Copy task name without parent tasks names"
+    }
+  }
 }
