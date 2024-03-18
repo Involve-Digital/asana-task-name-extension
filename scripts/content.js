@@ -7,6 +7,7 @@ const COMMENT_BUTTON_DIV_SELECTOR = 'div.ThemeableIconButtonPresentation--isEnab
 const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentation--overflowTruncate.TypographyPresentation--m.LeftIconItemStructure-label';
 const COMMENT_SECTION_CLASS_NAME = 'TaskStoryFeed';
 const MR_DELIMITERS = ['MR: ', 'MR - '];
+const COPY_BUTTON_ID = 'asana-task-name-extension-copy-button';
 
 function getSvgCheck() {
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -67,43 +68,59 @@ function extractTaskInfo(onlyChildTask) {
 }
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-  if (message.action === 'extractTaskInfo') {
-    extractTaskInfo();
+  if (message.action === 'copyOnlyTaskName') {
+    copyTaskInfo(true);
+  }
+
+  if (message.action === 'copyTaskNameParentIncluded') {
+    copyTaskInfo(false);
   }
 });
 
+const copyTaskInfo = (shiftPressed) => {
+  const taskInfo = extractTaskInfo(shiftPressed);
+  const button = document.getElementById(COPY_BUTTON_ID);
+
+  if (taskInfo) {
+    navigator.clipboard.writeText(taskInfo)
+      .then(() => {
+        button.innerHTML = getSvgCheck();
+
+        setTimeout(function () {
+          button.innerHTML = getSvgCopy();
+        }, 5000);
+
+        console.log('Task info copied to clipboard:', taskInfo);
+      })
+      .catch(err => {
+        button.innerHTML = getSvgCross();
+
+        setTimeout(function () {
+          button.innerHTML = getSvgCopy();
+        }, 5000);
+
+        console.error('Failed to copy task info to clipboard:', err);
+      });
+  }
+};
+
 /** @param {Node} elementToAppendButton */
 const appendCopyButton = (elementToAppendButton) => {
-  const button = document.createElement('button');
+  const buttonExists = document.getElementById(COPY_BUTTON_ID);
+  let button = buttonExists;
+
+  if (!button) {
+    button = document.createElement('button');
+  }
+
+  button.id = COPY_BUTTON_ID;
   button.innerHTML = getSvgCopy();
 
-  button.onclick = (e) => {
-    const taskInfo = extractTaskInfo(e.shiftKey);
+  button.onclick = (e) => copyTaskInfo(e.shiftKey);
 
-    if (taskInfo) {
-      navigator.clipboard.writeText(taskInfo)
-        .then(() => {
-          button.innerHTML = getSvgCheck();
-
-          setTimeout(function () {
-            button.innerHTML = getSvgCopy();
-          }, 5000);
-
-          console.log('Task info copied to clipboard:', taskInfo);
-        })
-        .catch(err => {
-          button.innerHTML = getSvgCross();
-
-          setTimeout(function () {
-            button.innerHTML = getSvgCopy();
-          }, 5000);
-
-          console.error('Failed to copy task info to clipboard:', err);
-        });
-    }
-  };
-
-  elementToAppendButton.appendChild(button);
+  if (!buttonExists) {
+    elementToAppendButton.appendChild(button);
+  }
 };
 
 /** @param {MutationRecord} mutation */
