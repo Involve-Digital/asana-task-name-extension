@@ -1,6 +1,6 @@
 const TASK_TITLE_SELECTOR = 'textarea.BaseTextarea.simpleTextarea--dynamic.simpleTextarea.AutogrowTextarea-input';
 const PARENT_TASK_TITLE_SELECTOR = 'div.Breadcrumb.TaskAncestryBreadcrumb.TaskAncestry-taskAncestryBreadcrumb > a';
-const HEADING_SELECTOR = 'div.TaskPaneToolbarAnimation-statusButtonRow.TaskPaneToolbarAnimation-row.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-start';
+const HEADING_SELECTOR = 'div.TaskPaneToolbar.TaskPane-header.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-space-between';
 const ALL_COMMENTS_SELECTOR = 'div.FeedBlockStory.TaskStoryFeed-blockStory';
 const COMMENT_TEXT_DIV_SELECTOR = 'div.TypographyPresentation.TypographyPresentation--m.RichText3-paragraph--withVSpacingNormal.RichText3-paragraph';
 const COMMENT_BUTTON_DIV_SELECTOR = 'div.ThemeableIconButtonPresentation--isEnabled.ThemeableIconButtonPresentation.ThemeableIconButtonPresentation--medium.SubtleIconButton--standardTheme.SubtleIconButton.BlockStoryDropdown.FeedBlockStory-actionsDropdownButton';
@@ -119,7 +119,9 @@ const appendCopyButton = (elementToAppendButton) => {
   button.onclick = (e) => copyTaskInfo(e.shiftKey);
 
   if (!buttonExists) {
-    elementToAppendButton.appendChild(button);
+    var referenceElement = elementToAppendButton.children[3];
+
+    elementToAppendButton.insertBefore(button, referenceElement);
   }
 };
 
