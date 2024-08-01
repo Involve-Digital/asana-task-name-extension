@@ -8,6 +8,10 @@ const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentati
 const COMMENT_SECTION_CLASS_NAME = 'TaskStoryFeed';
 const MR_DELIMITERS = ['MR: ', 'MR - '];
 const COPY_BUTTON_ID = 'asana-task-name-extension-copy-button';
+const START_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-tracking-button';
+const START_CODE_REVIEW_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-code-review-tracking-button';
+const TASK_PROJECT_SELECTOR = 'div.TaskProjectTokenPill-name';
+const BASE_API_URL = 'https://backend.involve.cz/api/v1';
 
 function getSvgCheck() {
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
@@ -31,6 +35,14 @@ function getSvgCopy() {
     '</svg>\n';
 }
 
+function getSvgStart() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="48px" height="48px" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path fill="#63E6BE" d="M0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zM188.3 147.1c-7.6 4.2-12.3 12.3-12.3 20.9l0 176c0 8.7 4.7 16.7 12.3 20.9s16.8 4.1 24.3-.5l144-88c7.1-4.4 11.5-12.1 11.5-20.5s-4.4-16.1-11.5-20.5l-144-88c-7.4-4.5-16.7-4.7-24.3-.5z"/></svg>';
+}
+
+function getSvgStartCR() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="48px" height="48px" viewBox="0 0 576 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path fill="#f8c716" d="M112 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm40 304l0 128c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-223.1L59.4 304.5c-9.1 15.1-28.8 20-43.9 10.9s-20-28.8-10.9-43.9l58.3-97c17.4-28.9 48.6-46.6 82.3-46.6l29.7 0c33.7 0 64.9 17.7 82.3 46.6l44.9 74.7c-16.1 17.6-28.6 38.5-36.6 61.5c-1.9-1.8-3.5-3.9-4.9-6.3L232 256.9 232 480c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-128-16 0zM432 224a144 144 0 1 1 0 288 144 144 0 1 1 0-288zm0 240a24 24 0 1 0 0-48 24 24 0 1 0 0 48zM368 321.6l0 6.4c0 8.8 7.2 16 16 16s16-7.2 16-16l0-6.4c0-5.3 4.3-9.6 9.6-9.6l40.5 0c7.7 0 13.9 6.2 13.9 13.9c0 5.2-2.9 9.9-7.4 12.3l-32 16.8c-5.3 2.8-8.6 8.2-8.6 14.2l0 14.8c0 8.8 7.2 16 16 16s16-7.2 16-16l0-5.1 23.5-12.3c15.1-7.9 24.5-23.6 24.5-40.6c0-25.4-20.6-45.9-45.9-45.9l-40.5 0c-23 0-41.6 18.6-41.6 41.6z"/></svg>';
+}
+
 function getSvgCross() {
   return '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n' +
@@ -43,6 +55,27 @@ function getSvgCross() {
     '<g><path style="opacity:0.982" fill="#ec1641" d="M 33.5,30.5 C 37.1667,29.1667 40.8333,29.1667 44.5,30.5C 44.0023,33.3263 42.6689,35.6597 40.5,37.5C 29.1667,37.5 17.8333,37.5 6.5,37.5C 4.04531,35.3678 2.37864,32.7012 1.5,29.5C 5.70159,29.1832 9.70159,29.5166 13.5,30.5C 13.4148,31.9953 14.0815,32.9953 15.5,33.5C 18.1667,31.1667 20.8333,28.8333 23.5,26.5C 26.1667,28.8333 28.8333,31.1667 31.5,33.5C 32.9185,32.9953 33.5852,31.9953 33.5,30.5 Z"/></g>\n' +
     '<g><path style="opacity:0.979" fill="#e80736" d="M 6.5,37.5 C 17.8333,37.5 29.1667,37.5 40.5,37.5C 36.5382,43.6066 30.8715,46.2733 23.5,45.5C 16.0552,46.2568 10.3885,43.5901 6.5,37.5 Z"/></g>\n' +
     '</svg>\n';
+}
+
+const handleRunTracking = (apiKey, taskName, project, tags) => {
+  console.log(apiKey, taskName);
+  fetch( BASE_API_URL+ '/asana-extension/run-tracking', {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      apiKey,
+      taskName,
+      project,
+      tags: tags
+    })
+  })
+    .then((resp) => resp.json())
+    .then((json) => {
+      console.log(json);
+    })
+    .catch(err => console.log(err,'err'));
 }
 
 function extractTaskInfo(onlyChildTask) {
@@ -67,6 +100,16 @@ function extractTaskInfo(onlyChildTask) {
   return null;
 }
 
+function extractTaskProjectName() {
+  const taskProjectElement = document.querySelector(TASK_PROJECT_SELECTOR);
+
+  if (taskProjectElement){
+    return taskProjectElement.textContent;
+  }
+
+  return null;
+}
+
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.action === 'copyOnlyTaskName') {
     copyTaskInfo(true);
@@ -77,9 +120,18 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   }
 });
 
-const copyTaskInfo = (shiftPressed) => {
+const copyTaskInfo = (shiftPressed, startTracking = false, tags = []) => {
   const taskInfo = extractTaskInfo(shiftPressed);
   const button = document.getElementById(COPY_BUTTON_ID);
+
+  if (taskInfo && startTracking){
+    chrome.storage.sync.get("togglApiKey", function(data) {
+      if (data.togglApiKey) {
+        const project = extractTaskProjectName();
+        handleRunTracking(data.togglApiKey, taskInfo, project, tags);
+      }
+    });
+  }
 
   if (taskInfo) {
     navigator.clipboard.writeText(taskInfo)
@@ -106,24 +158,57 @@ const copyTaskInfo = (shiftPressed) => {
 
 /** @param {Node} elementToAppendButton */
 const appendCopyButton = (elementToAppendButton) => {
-  const buttonExists = document.getElementById(COPY_BUTTON_ID);
+  appendButton(
+    elementToAppendButton,
+    COPY_BUTTON_ID,
+    getSvgCopy(),
+    (e) => copyTaskInfo(e.shiftKey),
+    'Copy task name',
+  );
+};
+
+/** @param {Node} elementToAppendButton */
+const appendTrackingButtons = (elementToAppendButton) => {
+  appendButton(
+    elementToAppendButton,
+    START_TRACKING_BUTTON_ID,
+    getSvgStart(),
+    (e) => copyTaskInfo(e.shiftKey, true),
+    'Start tracking',
+  );
+
+  appendButton(
+    elementToAppendButton,
+    START_CODE_REVIEW_TRACKING_BUTTON_ID,
+    getSvgStartCR(),
+    (e) => copyTaskInfo(e.shiftKey, true, ['code review']),
+    'Start Code review tracking',
+  );
+};
+
+const appendButton = (elementToAppendButton, id, svg, onClickCallback, title) => {
+  const buttonExists = document.getElementById(id);
   let button = buttonExists;
 
   if (!button) {
     button = document.createElement('button');
   }
 
-  button.id = COPY_BUTTON_ID;
-  button.innerHTML = getSvgCopy();
+  button.id = id;
+  button.innerHTML = svg;
 
-  button.onclick = (e) => copyTaskInfo(e.shiftKey);
+  if (title){
+    button.title = title;
+  }
+
+  button.onclick = (e) => onClickCallback(e);
 
   if (!buttonExists) {
-    var referenceElement = elementToAppendButton.children[3];
+    const referenceElement = elementToAppendButton.children[3];
 
     elementToAppendButton.insertBefore(button, referenceElement);
   }
-};
+}
 
 /** @param {MutationRecord} mutation */
 const addCopyButtonAfterMutation = (mutation) => {
@@ -137,6 +222,7 @@ const addCopyButtonAfterMutation = (mutation) => {
   }
 
   matchingElementsForCopyButton.forEach(appendCopyButton);
+  matchingElementsForCopyButton.forEach(appendTrackingButtons);
 };
 
 /** @param {MutationRecord} mutation */
