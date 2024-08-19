@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Asana task name extension",
   "description": "Asana task name extension",
-  "version": "1.7",
-  "permissions": ["clipboardWrite"],
+  "version": "1.8",
+  "permissions": ["clipboardWrite", "storage"],
   "action": {
     "default_popup": "/popup/hello.html",
     "default_icon": {
@@ -21,6 +21,18 @@
     {
       "matches": ["*://app.asana.com/*"],
       "js": ["/scripts/content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": ["*://app.asana.com/*"],
+      "resources": [
+        "/icons/check.svg",
+        "/icons/copy.svg",
+        "/icons/cross.svg",
+        "/icons/start.svg",
+        "/icons/start-cr.svg"
+      ]
     }
   ],
   "background": {
