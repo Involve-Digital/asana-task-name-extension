@@ -23,6 +23,18 @@
       "js": ["/scripts/content.js"]
     }
   ],
+  "web_accessible_resources": [
+    {
+      "matches": ["*://app.asana.com/*"],
+      "resources": [
+        "/icons/check.svg",
+        "/icons/copy.svg",
+        "/icons/cross.svg",
+        "/icons/start.svg",
+        "/icons/start-cr.svg"
+      ]
+    }
+  ],
   "background": {
     "service_worker": "/scripts/background.js"
   },
