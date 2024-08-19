@@ -11,6 +11,7 @@ const COPY_BUTTON_ID = 'asana-task-name-extension-copy-button';
 const START_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-tracking-button';
 const START_CODE_REVIEW_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-code-review-tracking-button';
 const TASK_PROJECT_SELECTOR = 'div.TaskProjectTokenPill-name';
+const TASK_PROJECT_FALLBACK_SELECTOR = 'div.TypographyPresentation.TypographyPresentation--colorWeak.TypographyPresentation--s.TaskAncestry-ancestorProjects>a.HiddenNavigationLink.TaskAncestry-ancestorProject';
 const BASE_API_URL = 'https://backend.involve.cz/api/v1';
 
 function getSvgCheck() {
@@ -58,11 +59,10 @@ function getSvgCross() {
 }
 
 const handleRunTracking = (apiKey, taskName, project, tags) => {
-  console.log(apiKey, taskName);
-  fetch( BASE_API_URL+ '/asana-extension/run-tracking', {
-    method: "POST",
+  fetch(BASE_API_URL + '/asana-extension/run-tracking', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       apiKey,
@@ -75,8 +75,8 @@ const handleRunTracking = (apiKey, taskName, project, tags) => {
     .then((json) => {
       console.log(json);
     })
-    .catch(err => console.log(err,'err'));
-}
+    .catch(err => console.log(err, 'err'));
+};
 
 function extractTaskInfo(onlyChildTask) {
   const taskTitleElement = document.querySelector(TASK_TITLE_SELECTOR);
@@ -103,8 +103,14 @@ function extractTaskInfo(onlyChildTask) {
 function extractTaskProjectName() {
   const taskProjectElement = document.querySelector(TASK_PROJECT_SELECTOR);
 
-  if (taskProjectElement){
+  if (taskProjectElement) {
     return taskProjectElement.textContent;
+  }
+
+  const taskProjectFallbackElement = document.querySelector(TASK_PROJECT_FALLBACK_SELECTOR);
+
+  if (taskProjectFallbackElement) {
+    return taskProjectFallbackElement.textContent;
   }
 
   return null;
@@ -124,8 +130,8 @@ const copyTaskInfo = (shiftPressed, startTracking = false, tags = []) => {
   const taskInfo = extractTaskInfo(shiftPressed);
   const button = document.getElementById(COPY_BUTTON_ID);
 
-  if (taskInfo && startTracking){
-    chrome.storage.sync.get("togglApiKey", function(data) {
+  if (taskInfo && startTracking) {
+    chrome.storage.sync.get('togglApiKey', function (data) {
       if (data.togglApiKey) {
         const project = extractTaskProjectName();
         handleRunTracking(data.togglApiKey, taskInfo, project, tags);
@@ -169,21 +175,25 @@ const appendCopyButton = (elementToAppendButton) => {
 
 /** @param {Node} elementToAppendButton */
 const appendTrackingButtons = (elementToAppendButton) => {
-  appendButton(
-    elementToAppendButton,
-    START_TRACKING_BUTTON_ID,
-    getSvgStart(),
-    (e) => copyTaskInfo(e.shiftKey, true),
-    'Start tracking',
-  );
+  chrome.storage.sync.get('togglApiKey', function (data) {
+    if (data.togglApiKey) {
+      appendButton(
+        elementToAppendButton,
+        START_TRACKING_BUTTON_ID,
+        getSvgStart(),
+        (e) => copyTaskInfo(e.shiftKey, true),
+        'Start tracking',
+      );
 
-  appendButton(
-    elementToAppendButton,
-    START_CODE_REVIEW_TRACKING_BUTTON_ID,
-    getSvgStartCR(),
-    (e) => copyTaskInfo(e.shiftKey, true, ['code review']),
-    'Start Code review tracking',
-  );
+      appendButton(
+        elementToAppendButton,
+        START_CODE_REVIEW_TRACKING_BUTTON_ID,
+        getSvgStartCR(),
+        (e) => copyTaskInfo(e.shiftKey, true, ['code review']),
+        'Start Code review tracking',
+      );
+    }
+  });
 };
 
 const appendButton = (elementToAppendButton, id, svg, onClickCallback, title) => {
@@ -197,7 +207,7 @@ const appendButton = (elementToAppendButton, id, svg, onClickCallback, title) =>
   button.id = id;
   button.innerHTML = svg;
 
-  if (title){
+  if (title) {
     button.title = title;
   }
 
@@ -208,7 +218,7 @@ const appendButton = (elementToAppendButton, id, svg, onClickCallback, title) =>
 
     elementToAppendButton.insertBefore(button, referenceElement);
   }
-}
+};
 
 /** @param {MutationRecord} mutation */
 const addCopyButtonAfterMutation = (mutation) => {
