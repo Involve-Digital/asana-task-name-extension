@@ -19,10 +19,10 @@ function getSvgIcon(name) {
 
   return fetch(svgPath)
     .then(response => response.text())
-    .then(svgContent => svgContent)
     .catch(error => {
       console.error('Error loading SVG:', error);
-      return 'test';
+
+      return '';
     });
 }
 
@@ -38,12 +38,7 @@ const handleRunTracking = (apiKey, taskName, project, tags) => {
       project,
       tags: tags
     })
-  })
-    .then((resp) => resp.json())
-    .then((json) => {
-      console.log(json);
-    })
-    .catch(err => console.log(err, 'err'));
+  }).catch(err => console.error(err, 'err'));
 };
 
 function extractTaskInfo(onlyChildTask) {
