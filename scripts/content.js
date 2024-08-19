@@ -38,7 +38,7 @@ const handleRunTracking = (apiKey, taskName, project, tags) => {
       project,
       tags: tags
     })
-  }).catch(err => console.error(err, 'err'));
+  }).catch(err => console.error(err));
 };
 
 function extractTaskInfo(onlyChildTask) {
