@@ -11,7 +11,7 @@ const COPY_BUTTON_ID = 'asana-task-name-extension-copy-button';
 const START_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-tracking-button';
 const START_CODE_REVIEW_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-code-review-tracking-button';
 const TASK_PROJECT_SELECTOR = 'div.TaskProjectTokenPill-name';
-const TASK_PROJECT_FALLBACK_SELECTOR = 'div.TypographyPresentation.TypographyPresentation--colorWeak.TypographyPresentation--s.TaskAncestry-ancestorProjects>a.HiddenNavigationLink.TaskAncestry-ancestorProject';
+const TASK_PROJECT_FALLBACK_SELECTOR = 'a.HiddenNavigationLink.TaskAncestry-ancestorProject';
 const BASE_API_URL = 'https://backend.involve.cz/api/v1';
 
 function getSvgIcon(name) {
