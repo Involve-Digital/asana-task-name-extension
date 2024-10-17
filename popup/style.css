@@ -6,8 +6,7 @@ body {
 
 .popup {
 	display: flex;
-	width: 200px;
-	display: flex;
+	width: 300px;
 	flex-direction: column;
 }
 
