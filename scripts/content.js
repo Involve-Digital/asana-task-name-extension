@@ -8,14 +8,18 @@ const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentati
 const COMMENT_SECTION_CLASS_NAME = 'TaskStoryFeed';
 const MR_DELIMITERS = ['MR: ', 'MR - '];
 const COPY_BUTTON_ID = 'asana-task-name-extension-copy-button';
+const TOGGL_REPORT_BUTTON_ID = 'asana-task-name-extension-toggl-report-button';
 const START_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-tracking-button';
 const START_CODE_REVIEW_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-code-review-tracking-button';
 const TASK_PROJECT_SELECTOR = 'div.TaskProjectTokenPill-name';
 const TASK_PROJECT_FALLBACK_SELECTOR = 'a.HiddenNavigationLink.TaskAncestry-ancestorProject';
 const BASE_API_URL = 'https://backend.involve.cz/api/v1';
+const TOGGL_REPORT_URL = 'https://track.toggl.com/reports/summary/1033184/description/__taskName__/period/last12Months';
 
 function getSvgIcon(name) {
   const svgPath = chrome.runtime.getURL('icons/' + name + '.svg');
+
+  console.log(svgPath);
 
   return fetch(svgPath)
     .then(response => response.text())
@@ -127,34 +131,69 @@ const copyTaskInfo = (shiftPressed, startTracking = false, tags = []) => {
 
 /** @param {Node} elementToAppendButton */
 const appendCopyButton = async (elementToAppendButton) => {
-  appendButton(
-    elementToAppendButton,
-    COPY_BUTTON_ID,
-    await getSvgIcon('copy'),
-    (e) => copyTaskInfo(e.shiftKey),
-    'Copy task name',
-  );
+  chrome.storage.sync.get('copyButton', async function (data) {
+    if (data.copyButton) {
+      appendButton(
+        elementToAppendButton,
+        COPY_BUTTON_ID,
+        await getSvgIcon('copy'),
+        (e) => copyTaskInfo(e.shiftKey),
+        'Copy task name',
+      );
+    }
+  });
+};
+
+/** @param {Node} elementToAppendButton */
+const appendToggleButton = async (elementToAppendButton) => {
+  chrome.storage.sync.get('togglReportButton', async function (data) {
+    if (data.togglReportButton) {
+      appendButton(
+        elementToAppendButton,
+        TOGGL_REPORT_BUTTON_ID,
+        await getSvgIcon('analysis'),
+        (e) => {
+          const taskInfo = extractTaskInfo(e.shiftKey);
+
+          if (taskInfo) {
+            const url = TOGGL_REPORT_URL.replace('__taskName__', taskInfo);
+
+            window.open(url, '_blank');
+          }
+        },
+        'See report in Toggl',
+      );
+    }
+  });
 };
 
 /** @param {Node} elementToAppendButton */
 const appendTrackingButtons = (elementToAppendButton) => {
   chrome.storage.sync.get('togglApiKey', async function (data) {
     if (data.togglApiKey) {
-      appendButton(
-        elementToAppendButton,
-        START_TRACKING_BUTTON_ID,
-        await getSvgIcon('start'),
-        (e) => copyTaskInfo(e.shiftKey, true),
-        'Start tracking',
-      );
+      chrome.storage.sync.get('trackingButton', async function (data) {
+        if (data.trackingButton){
+          appendButton(
+            elementToAppendButton,
+            START_TRACKING_BUTTON_ID,
+            await getSvgIcon('start'),
+            (e) => copyTaskInfo(e.shiftKey, true),
+            'Start tracking',
+          );
+        }
+      });
 
-      appendButton(
-        elementToAppendButton,
-        START_CODE_REVIEW_TRACKING_BUTTON_ID,
-        await getSvgIcon('start-cr'),
-        (e) => copyTaskInfo(e.shiftKey, true, ['code review']),
-        'Start Code review tracking',
-      );
+      chrome.storage.sync.get('crTrackingButton', async function (data) {
+        if (data.crTrackingButton){
+          appendButton(
+            elementToAppendButton,
+            START_CODE_REVIEW_TRACKING_BUTTON_ID,
+            await getSvgIcon('start-cr'),
+            (e) => copyTaskInfo(e.shiftKey, true, ['code review']),
+            'Start Code review tracking',
+          );
+        }
+      });
     }
   });
 };
@@ -196,6 +235,7 @@ const addCopyButtonAfterMutation = (mutation) => {
 
   matchingElementsForCopyButton.forEach(appendCopyButton);
   matchingElementsForCopyButton.forEach(appendTrackingButtons);
+  matchingElementsForCopyButton.forEach(appendToggleButton);
 };
 
 /** @param {MutationRecord} mutation */
