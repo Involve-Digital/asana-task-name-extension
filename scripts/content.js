@@ -119,7 +119,7 @@ const copyTaskInfo = async (shiftPressed, startTracking = false, tags = []) => {
     taskId = urlParts.pop();
   }
 
-  const taskInfoApi = await getTaskInfo('2/1201030239876366/1208261673496783:552d80f7f152b5c0f27b054413e6b9a1', taskId);
+  const taskInfoApi = await getTaskInfo('2/1201030239876366/1208261673496783:100a1e8fda517bc34216cfbbea9e0883', taskId);
   console.log(taskInfoApi);
 
   let taskInfo;
