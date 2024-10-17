@@ -2,9 +2,9 @@ const TASK_TITLE_SELECTOR = 'textarea.BaseTextarea.simpleTextarea--dynamic.simpl
 const PARENT_TASK_TITLE_SELECTOR = 'div.Breadcrumb.TaskAncestryBreadcrumb.TaskAncestry-taskAncestryBreadcrumb > a';
 const HEADING_SELECTOR = 'div.TaskPaneToolbar.TaskPane-header.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-space-between';
 const ALL_COMMENTS_SELECTOR = 'div.FeedBlockStory.TaskStoryFeed-blockStory';
-const COMMENT_TEXT_DIV_SELECTOR = 'div.TypographyPresentation.TypographyPresentation--m.RichText3-paragraph--withVSpacingNormal.RichText3-paragraph';
+const COMMENT_TEXT_DIV_SELECTOR = 'div.TypographyPresentation.TypographyPresentation--medium.RichText3-paragraph--withVSpacingNormal.RichText3-paragraph';
 const COMMENT_BUTTON_DIV_SELECTOR = 'div.ThemeableIconButtonPresentation--isEnabled.ThemeableIconButtonPresentation.ThemeableIconButtonPresentation--medium.SubtleIconButton--standardTheme.SubtleIconButton.BlockStoryDropdown.FeedBlockStory-actionsDropdownButton';
-const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentation--overflowTruncate.TypographyPresentation--m.LeftIconItemStructure-label';
+const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentation--overflowTruncate.TypographyPresentation--medium.LeftIconItemStructure-label';
 const COMMENT_SECTION_CLASS_NAME = 'TaskStoryFeed';
 const MR_DELIMITERS = ['MR: ', 'MR - '];
 const COPY_BUTTON_ID = 'asana-task-name-extension-copy-button';
@@ -12,7 +12,7 @@ const START_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-tracking-butto
 const START_CODE_REVIEW_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-code-review-tracking-button';
 const TASK_PROJECT_SELECTOR = 'div.TaskProjectTokenPill-name';
 const TASK_PROJECT_FALLBACK_SELECTOR = 'a.HiddenNavigationLink.TaskAncestry-ancestorProject';
-const BASE_API_URL = 'https://backend.involve.cz/api/v1';
+const BASE_API_URL = 'https://involve-backend.local/api/v1';
 
 function getSvgIcon(name) {
   const svgPath = chrome.runtime.getURL('icons/' + name + '.svg');
@@ -39,6 +39,23 @@ const handleRunTracking = (apiKey, taskName, project, tags) => {
       tags: tags
     })
   }).catch(err => console.error(err));
+};
+
+const getTaskInfo = async (apiKey, taskId) => {
+  const response = await fetch(BASE_API_URL + '/asana-extension/task-information', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      apiKey,
+      taskId,
+    })
+  });
+
+  const jsonResponse = await response.json();
+
+  return jsonResponse?.data
 };
 
 function extractTaskInfo(onlyChildTask) {
@@ -89,14 +106,37 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   }
 });
 
-const copyTaskInfo = (shiftPressed, startTracking = false, tags = []) => {
-  const taskInfo = extractTaskInfo(shiftPressed);
+const copyTaskInfo = async (shiftPressed, startTracking = false, tags = []) => {
+  const link = document.querySelector('a.TaskPaneToolbar-fullScreenButton');
+  const urlParts = link?.href?.replace('/f', '').split('/');
+  let taskId;
+
+  console.log(urlParts);
+
+  if (urlParts.includes('inbox')) {
+    taskId = urlParts[6];
+  } else {
+    taskId = urlParts.pop();
+  }
+
+  const taskInfoApi = await getTaskInfo('2/1201030239876366/1208261673496783:552d80f7f152b5c0f27b054413e6b9a1', taskId);
+  console.log(taskInfoApi);
+
+  let taskInfo;
+
+  if (shiftPressed){
+    taskInfo = taskInfoApi?.taskName
+  }else {
+    taskInfo = taskInfoApi?.wholeTaskName;
+  }
+
   const button = document.getElementById(COPY_BUTTON_ID);
 
-  if (taskInfo && startTracking) {
+  if (taskInfoApi && startTracking) {
     chrome.storage.sync.get('togglApiKey', function (data) {
       if (data.togglApiKey) {
-        const project = extractTaskProjectName();
+        const project = taskInfoApi.project;
+        const taskInfo = taskInfoApi.wholeTaskName;
         handleRunTracking(data.togglApiKey, taskInfo, project, tags);
       }
     });
@@ -144,7 +184,7 @@ const appendTrackingButtons = (elementToAppendButton) => {
         elementToAppendButton,
         START_TRACKING_BUTTON_ID,
         await getSvgIcon('start'),
-        (e) => copyTaskInfo(e.shiftKey, true),
+        async (e) => await copyTaskInfo(e.shiftKey, true),
         'Start tracking',
       );
 
@@ -152,7 +192,7 @@ const appendTrackingButtons = (elementToAppendButton) => {
         elementToAppendButton,
         START_CODE_REVIEW_TRACKING_BUTTON_ID,
         await getSvgIcon('start-cr'),
-        (e) => copyTaskInfo(e.shiftKey, true, ['code review']),
+        async (e) => await copyTaskInfo(e.shiftKey, true, ['code review']),
         'Start Code review tracking',
       );
     }
@@ -231,6 +271,7 @@ function pinToTop() {
   allComments.forEach((comment) => {
     const commentTextDiv = comment.querySelector(COMMENT_TEXT_DIV_SELECTOR);
     const commentButtonDiv = comment.querySelector(COMMENT_BUTTON_DIV_SELECTOR);
+    console.log(commentButtonDiv);
 
     if (!commentTextDiv) {
       console.log('Comment not found on this task');
