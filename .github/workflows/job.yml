@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - uses: actions/setup-node@v2-beta
         with:
           node-version: "18.10"
@@ -22,7 +22,7 @@ jobs:
           zip -r chrome-extension-${{ github.event.pull_request.head.sha }}.zip .
 
       - name: Archive chrome-extension artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: chrome-extension-${{ github.sha }}
           path: chrome-extension-${{ github.event.pull_request.head.sha }}.zip
