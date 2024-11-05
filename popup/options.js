@@ -6,8 +6,8 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   chrome.storage.sync.get("asanaApiKey", function (data) {
-    if (data.togglApiKey) {
-      document.getElementById("asanaApiKey").value = data.togglApiKey;
+    if (data.asanaApiKey) {
+      document.getElementById("asanaApiKey").value = data.asanaApiKey;
     }
   });
 
