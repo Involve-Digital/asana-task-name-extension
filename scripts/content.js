@@ -191,13 +191,14 @@ const copyTaskInfo = async (shiftPressed, startTracking = false, tags = [], butt
         })
         .finally(() => {
           setTimeout(async function () {
-            const iconName = ICONS_TO_BUTTON[buttonId];
+            const iconName = ICONS_TO_BUTTON[button.id];
             button.innerHTML = await getSvgIcon(iconName);
           }, 5000);
         });
     }
   } catch (error) {
-    button.innerHTML = await getSvgIcon('copy');
+    const iconName = ICONS_TO_BUTTON[button.id];
+    button.innerHTML = await getSvgIcon(iconName);
     console.error(error); // Log any errors that occur
   }
 };
