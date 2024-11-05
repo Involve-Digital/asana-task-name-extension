@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.getElementById("save").addEventListener("click", function () {
     const togglApiKey = document.getElementById("togglApiKey").value;
-        const asanaApiKey = document.getElementById("asanaApiKey").value;
+    const asanaApiKey = document.getElementById("asanaApiKey").value;
     const copyButton = document.getElementById("copyButton").checked;
     const togglReportButton = document.getElementById("togglReportButton").checked;
     const trackingButton = document.getElementById("trackingButton").checked;

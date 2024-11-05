@@ -13,9 +13,10 @@ const START_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-tracking-butto
 const START_CODE_REVIEW_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-code-review-tracking-button';
 const TASK_PROJECT_SELECTOR = 'div.TaskProjectTokenPill-name';
 const TASK_PROJECT_FALLBACK_SELECTOR = 'a.HiddenNavigationLink.TaskAncestry-ancestorProject';
-const BASE_API_URL = 'https://involve-backend.local/api/v1';
-// const BASE_API_URL = 'https://backend.involve.cz/api/v1';
+const COPY_TASK_LINK_SELECTOR = 'div.TaskPaneToolbar-copyLinkButton';
+const BASE_API_URL = 'https://backend.involve.cz/api/v1';
 const TOGGL_REPORT_URL = 'https://track.toggl.com/reports/summary/1033184/description/__taskName__/period/last12Months';
+
 
 const ICONS_TO_BUTTON = {
   [COPY_BUTTON_ID]: 'copy',
@@ -136,18 +137,29 @@ const fetchData = async (taskId) => {
 };
 
 const copyTaskInfo = async (shiftPressed, startTracking = false, tags = [], buttonId = null) => {
-  const copyButton = document.querySelector('div.TaskPaneToolbar-copyLinkButton');
+  const copyButton = document.querySelector(COPY_TASK_LINK_SELECTOR);
   copyButton.click();
+  let link;
 
-  const clipboardContents = await navigator.clipboard.read();
+  try {
+    const clipboardContents = await navigator.clipboard.read();
 
-  const blob = await clipboardContents[0].getType("text/plain");
-  const link = await blob.text();
+    if (!clipboardContents.length){
+      return;
+    }
+
+    const blob = await clipboardContents[0].getType("text/plain");
+    link = await blob.text();
+  } catch (error) {
+    console.error(error); // Log any errors that occur
+
+    return;
+  }
 
   const urlParts = link?.replace('/f', '').split('/');
   let taskId;
 
-  if (!urlParts) {
+  if (!urlParts || !urlParts.length) {
     return;
   }
 
