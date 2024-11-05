@@ -5,6 +5,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  chrome.storage.sync.get("asanaApiKey", function (data) {
+    if (data.asanaApiKey) {
+      document.getElementById("asanaApiKey").value = data.asanaApiKey;
+    }
+  });
+
   chrome.storage.sync.get("copyButton", function (data) {
     if (data.copyButton) {
       document.getElementById("copyButton").checked = data.copyButton;
@@ -31,6 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.getElementById("save").addEventListener("click", function () {
     const togglApiKey = document.getElementById("togglApiKey").value;
+    const asanaApiKey = document.getElementById("asanaApiKey").value;
     const copyButton = document.getElementById("copyButton").checked;
     const togglReportButton = document.getElementById("togglReportButton").checked;
     const trackingButton = document.getElementById("trackingButton").checked;
@@ -38,6 +45,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     chrome.storage.sync.set({
       "togglApiKey": togglApiKey,
+      "asanaApiKey": asanaApiKey,
       "copyButton": copyButton,
       "togglReportButton": togglReportButton,
       "trackingButton": trackingButton,

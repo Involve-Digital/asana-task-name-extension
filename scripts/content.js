@@ -2,9 +2,9 @@ const TASK_TITLE_SELECTOR = 'textarea.BaseTextarea.simpleTextarea--dynamic.simpl
 const PARENT_TASK_TITLE_SELECTOR = 'div.Breadcrumb.TaskAncestryBreadcrumb.TaskAncestry-taskAncestryBreadcrumb > a';
 const HEADING_SELECTOR = 'div.TaskPaneToolbar.TaskPane-header.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-space-between';
 const ALL_COMMENTS_SELECTOR = 'div.FeedBlockStory.TaskStoryFeed-blockStory';
-const COMMENT_TEXT_DIV_SELECTOR = 'div.TypographyPresentation.TypographyPresentation--m.RichText3-paragraph--withVSpacingNormal.RichText3-paragraph';
+const COMMENT_TEXT_DIV_SELECTOR = 'div.TypographyPresentation.TypographyPresentation--medium.RichText3-paragraph--withVSpacingNormal.RichText3-paragraph';
 const COMMENT_BUTTON_DIV_SELECTOR = 'div.ThemeableIconButtonPresentation--isEnabled.ThemeableIconButtonPresentation.ThemeableIconButtonPresentation--medium.SubtleIconButton--standardTheme.SubtleIconButton.BlockStoryDropdown.FeedBlockStory-actionsDropdownButton';
-const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentation--overflowTruncate.TypographyPresentation--m.LeftIconItemStructure-label';
+const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentation--overflowTruncate.TypographyPresentation--medium.LeftIconItemStructure-label';
 const COMMENT_SECTION_CLASS_NAME = 'TaskStoryFeed';
 const MR_DELIMITERS = ['MR: ', 'MR - '];
 const COPY_BUTTON_ID = 'asana-task-name-extension-copy-button';
@@ -13,13 +13,19 @@ const START_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-tracking-butto
 const START_CODE_REVIEW_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-code-review-tracking-button';
 const TASK_PROJECT_SELECTOR = 'div.TaskProjectTokenPill-name';
 const TASK_PROJECT_FALLBACK_SELECTOR = 'a.HiddenNavigationLink.TaskAncestry-ancestorProject';
+const COPY_TASK_LINK_SELECTOR = 'div.TaskPaneToolbar-copyLinkButton';
 const BASE_API_URL = 'https://backend.involve.cz/api/v1';
 const TOGGL_REPORT_URL = 'https://track.toggl.com/reports/summary/1033184/description/__taskName__/period/last12Months';
 
+
+const ICONS_TO_BUTTON = {
+  [COPY_BUTTON_ID]: 'copy',
+  [START_TRACKING_BUTTON_ID]: 'start',
+  [START_CODE_REVIEW_TRACKING_BUTTON_ID]: 'start-cr',
+}
+
 function getSvgIcon(name) {
   const svgPath = chrome.runtime.getURL('icons/' + name + '.svg');
-
-  console.log(svgPath);
 
   return fetch(svgPath)
     .then(response => response.text())
@@ -43,6 +49,23 @@ const handleRunTracking = (apiKey, taskName, project, tags) => {
       tags: tags
     })
   }).catch(err => console.error(err));
+};
+
+const getTaskInfo = async (apiKey, taskId) => {
+  const response = await fetch(BASE_API_URL + '/asana-extension/task-information', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      apiKey,
+      taskId,
+    })
+  });
+
+  const jsonResponse = await response.json();
+
+  return jsonResponse?.data
 };
 
 function extractTaskInfo(onlyChildTask) {
@@ -93,39 +116,102 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   }
 });
 
-const copyTaskInfo = (shiftPressed, startTracking = false, tags = []) => {
-  const taskInfo = extractTaskInfo(shiftPressed);
-  const button = document.getElementById(COPY_BUTTON_ID);
-
-  if (taskInfo && startTracking) {
-    chrome.storage.sync.get('togglApiKey', function (data) {
-      if (data.togglApiKey) {
-        const project = extractTaskProjectName();
-        handleRunTracking(data.togglApiKey, taskInfo, project, tags);
+const fetchData = async (taskId) => {
+  return new Promise((resolve, reject) => {
+    chrome.storage.sync.get('asanaApiKey', async function (data) {
+      if (data.asanaApiKey) {
+        try {
+          const taskInfo = await getTaskInfo(
+            data.asanaApiKey,
+            taskId
+          );
+          resolve(taskInfo);
+        } catch (error) {
+          reject(error);
+        }
+      } else {
+        reject('API Key not found');
       }
     });
+  });
+};
+
+const copyTaskInfo = async (shiftPressed, startTracking = false, tags = [], buttonId = null) => {
+  const copyButton = document.querySelector(COPY_TASK_LINK_SELECTOR);
+  copyButton.click();
+  let link;
+
+  try {
+    const clipboardContents = await navigator.clipboard.read();
+
+    if (!clipboardContents.length){
+      return;
+    }
+
+    const blob = await clipboardContents[0].getType("text/plain");
+    link = await blob.text();
+  } catch (error) {
+    console.error(error); // Log any errors that occur
+
+    return;
   }
 
-  if (taskInfo) {
-    navigator.clipboard.writeText(taskInfo)
-      .then(async () => {
-        button.innerHTML = await getSvgIcon('check');
+  const urlParts = link?.replace('/f', '').split('/');
+  let taskId;
 
-        setTimeout(async function () {
-          button.innerHTML = await getSvgIcon('copy');
-        }, 5000);
+  if (!urlParts || !urlParts.length) {
+    return;
+  }
 
-        console.log('Task info copied to clipboard:', taskInfo);
-      })
-      .catch(async err => {
-        button.innerHTML = await getSvgIcon('cross');
+  taskId = urlParts.pop();
 
-        setTimeout(async function () {
-          button.innerHTML = await getSvgIcon('copy');
-        }, 5000);
+  const button = document.getElementById(buttonId || COPY_BUTTON_ID);
 
-        console.error('Failed to copy task info to clipboard:', err);
+  try {
+    button.innerHTML = await getSvgIcon('loader');
+
+    const taskInfoApi = await fetchData(taskId);
+    let taskInfo;
+
+    if (shiftPressed) {
+      taskInfo = taskInfoApi?.taskName
+    } else {
+      taskInfo = taskInfoApi?.wholeTaskName;
+    }
+
+    if (taskInfoApi && startTracking) {
+      chrome.storage.sync.get('togglApiKey', function (data) {
+        if (data.togglApiKey) {
+          const project = taskInfoApi.project;
+          const taskInfo = taskInfoApi.wholeTaskName;
+          handleRunTracking(data.togglApiKey, taskInfo, project, tags);
+        }
       });
+    }
+
+    if (taskInfo) {
+      navigator.clipboard.writeText(taskInfo)
+        .then(async () => {
+          button.innerHTML = await getSvgIcon('check');
+
+          console.log('Task info copied to clipboard:', taskInfo);
+        })
+        .catch(async err => {
+          button.innerHTML = await getSvgIcon('cross');
+
+          console.error('Failed to copy task info to clipboard:', err);
+        })
+        .finally(() => {
+          setTimeout(async function () {
+            const iconName = ICONS_TO_BUTTON[button.id];
+            button.innerHTML = await getSvgIcon(iconName);
+          }, 5000);
+        });
+    }
+  } catch (error) {
+    const iconName = ICONS_TO_BUTTON[button.id];
+    button.innerHTML = await getSvgIcon(iconName);
+    console.error(error); // Log any errors that occur
   }
 };
 
@@ -137,7 +223,7 @@ const appendCopyButton = async (elementToAppendButton) => {
         elementToAppendButton,
         COPY_BUTTON_ID,
         await getSvgIcon('copy'),
-        (e) => copyTaskInfo(e.shiftKey),
+        (e) => copyTaskInfo(e.shiftKey, false, [], COPY_BUTTON_ID),
         'Copy task name',
       );
     }
@@ -172,24 +258,24 @@ const appendTrackingButtons = (elementToAppendButton) => {
   chrome.storage.sync.get('togglApiKey', async function (data) {
     if (data.togglApiKey) {
       chrome.storage.sync.get('trackingButton', async function (data) {
-        if (data.trackingButton){
+        if (data.trackingButton) {
           appendButton(
             elementToAppendButton,
             START_TRACKING_BUTTON_ID,
             await getSvgIcon('start'),
-            (e) => copyTaskInfo(e.shiftKey, true),
+            (e) => copyTaskInfo(e.shiftKey, true, [], START_TRACKING_BUTTON_ID),
             'Start tracking',
           );
         }
       });
 
       chrome.storage.sync.get('crTrackingButton', async function (data) {
-        if (data.crTrackingButton){
+        if (data.crTrackingButton) {
           appendButton(
             elementToAppendButton,
             START_CODE_REVIEW_TRACKING_BUTTON_ID,
             await getSvgIcon('start-cr'),
-            (e) => copyTaskInfo(e.shiftKey, true, ['code review']),
+            (e) => copyTaskInfo(e.shiftKey, true, ['code review'], START_CODE_REVIEW_TRACKING_BUTTON_ID),
             'Start Code review tracking',
           );
         }
