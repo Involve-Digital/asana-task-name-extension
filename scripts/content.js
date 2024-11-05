@@ -2,8 +2,8 @@ const TASK_TITLE_SELECTOR = 'textarea.BaseTextarea.simpleTextarea--dynamic.simpl
 const PARENT_TASK_TITLE_SELECTOR = 'div.Breadcrumb.TaskAncestryBreadcrumb.TaskAncestry-taskAncestryBreadcrumb > a';
 const HEADING_SELECTOR = 'div.TaskPaneToolbar.TaskPane-header.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-space-between';
 const ALL_COMMENTS_SELECTOR = 'div.FeedBlockStory.TaskStoryFeed-blockStory';
-const COMMENT_TEXT_DIV_SELECTOR = 'div.TypographyPresentation.TypographyPresentation--medium.RichText3-paragraph--withVSpacingNormal.RichText3-paragraph';
-const COMMENT_BUTTON_DIV_SELECTOR = 'div.ThemeableIconButtonPresentation--isEnabled.ThemeableIconButtonPresentation.ThemeableIconButtonPresentation--medium.SubtleIconButton--standardTheme.SubtleIconButton.BlockStoryDropdown.FeedBlockStory-actionsDropdownButton';
+const COMMENT_TEXT_DIV_SELECTOR = 'div.RichText3.TruncatedRichText-richText';
+const COMMENT_BUTTON_DIV_SELECTOR = 'div.FeedBlockStory-actionsDropdownButton';
 const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentation--overflowTruncate.TypographyPresentation--medium.LeftIconItemStructure-label';
 const COMMENT_SECTION_CLASS_NAME = 'TaskStoryFeed';
 const MR_DELIMITERS = ['MR: ', 'MR - '];
@@ -367,19 +367,21 @@ function pinToTop() {
     }
 
     if (commentTextDiv && commentButtonDiv) {
-      const commentText = commentTextDiv.textContent;
+      const commentText = commentTextDiv.innerHTML;
       const isIncluded = MR_DELIMITERS.some(delimiter => commentText.includes(delimiter));
 
       if (isIncluded) {
         commentButtonDiv.click();
 
-        const pinToTop = document.querySelector(PIN_TO_TOP_BUTTON_SELECTOR);
+        setTimeout(() => {
+          const pinToTop = document.querySelector(PIN_TO_TOP_BUTTON_SELECTOR);
 
-        if (pinToTop && pinToTop.textContent === 'Pin to top') {
-          pinToTop.click();
-        } else {
+          if (pinToTop && pinToTop.textContent === 'Pin to top') {
+            pinToTop.click();
+          }
+
           commentButtonDiv.click();
-        }
+        }, 1);
       }
     }
   });
