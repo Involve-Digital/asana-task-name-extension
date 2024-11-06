@@ -140,23 +140,30 @@ const copyTaskInfo = async (shiftPressed, startTracking = false, tags = [], butt
   const copyButton = document.querySelector(COPY_TASK_LINK_SELECTOR);
   copyButton.click();
   let link;
+  let urlParts;
 
   try {
     const clipboardContents = await navigator.clipboard.read();
 
-    if (!clipboardContents.length){
+    if (!clipboardContents.length) {
       return;
     }
 
     const blob = await clipboardContents[0].getType("text/plain");
     link = await blob.text();
+    urlParts = link?.replace('/f', '').split('/');
   } catch (error) {
-    console.error(error); // Log any errors that occur
+    const taskIdElement = document.querySelector('[data-task-id]');
 
-    return;
+    if (!taskIdElement?.dataset?.taskId) {
+      console.error(error); // Log any errors that occur
+
+      return;
+    }
+
+    urlParts = [taskIdElement.dataset.taskId];
   }
 
-  const urlParts = link?.replace('/f', '').split('/');
   let taskId;
 
   if (!urlParts || !urlParts.length) {
