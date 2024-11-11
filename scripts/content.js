@@ -249,7 +249,9 @@ const appendToggleButton = async (elementToAppendButton) => {
           const taskInfo = extractTaskInfo(e.shiftKey);
 
           if (taskInfo) {
-            const url = TOGGL_REPORT_URL.replace('__taskName__', taskInfo);
+            const saveTaskInfo = encodeURIComponent(taskInfo);
+
+            const url = TOGGL_REPORT_URL.replace('__taskName__', saveTaskInfo);
 
             window.open(url, '_blank');
           }
