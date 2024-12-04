@@ -1,0 +1,66 @@
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="styles.css"/>
+        <title>Asana task name extension</title>
+    </head>
+    <body>
+        <div class="window" tabindex="0">
+            <div class="window__title-bar">
+                <div class="window__title">
+                    <img class="icon" src="./../images/icon.png" width="32" height="32">
+                    Asana task name extension
+                </div>
+                <div class="window__controls">
+                    <button content="icon-only" class="button--icon" type="button" href="#" title="{title}">
+                        <img src="./../icons/debug.svg" width="20" height="20" alt="debug" color="#fff">
+                    </button>
+                    <button content="icon-only" class="button--icon" type="button" href="#" title="{title}">
+                        <img src="./../icons/settings.svg" width="20" height="20" alt="settings">
+                    </button>
+                </div>
+            </div>
+            <div class="window__body">
+                <p>
+                    <strong>Copy task name without parent tasks names</strong> <kbd>Ctrl</kbd>+<kbd>U</kbd>
+                </p>
+                <p>
+                    <strong>Copy task name with parent tasks names</strong> <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>U</kbd>
+                </p>
+                <div class="grid mb-20">
+                    <div class="cell mb-20">
+                        <input placeholder="Toggl API Key..." class="text-input" type="text" id="togglApiKey">
+                    </div>
+                    <div class="cell">
+                        <input placeholder="Asana API Key..." class="text-input" type="text" id="asanaApiKey">
+                    </div>
+                </div>
+                <hr>
+                <h3>Optional buttons</h3>
+                <div class="grid grid-middle mb-10">
+                    <div class="cell cell-middle gap-1">
+                        <input type="checkbox" id="trackingButton" class="checkbox">
+                        <label for="trackingButton">Start Toggl tracking</label>
+                    </div>
+                    <div class="cell cell-middle gap-1">
+                        <input type="checkbox" id="crTrackingButton" class="checkbox">
+                        <label for="crTrackingButton">Start Toggl <strong>CR</strong> tracking</label>
+                    </div>
+                    <div class="cell cell-middle gap-1">
+                        <input type="checkbox" id="copyButton" class="checkbox">
+                        <label for="copyButton">Copy task name</label>
+                    </div>
+                    <div class="cell cell-middle gap-1">
+                        <input type="checkbox" id="togglReportButton" class="checkbox">
+                        <label for="togglReportButton">Show Toggl report</label>
+                    </div>
+                </div>
+                <button class="submit" id="save">Save</button>
+            </div>
+
+            <div class="window__status-bar">
+                <small>Refresh page to update buttons</small>
+            </div>
+        </div>
+        <script src="options.js"></script>
+    </body>
+</html>
