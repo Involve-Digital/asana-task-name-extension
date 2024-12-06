@@ -245,8 +245,19 @@ const appendToggleButton = async (elementToAppendButton) => {
         elementToAppendButton,
         TOGGL_REPORT_BUTTON_ID,
         await getSvgIcon('analysis'),
-        (e) => {
-          const taskInfo = extractTaskInfo(e.shiftKey);
+        async (e) => {
+          const taskIdElement = document.querySelector('[data-task-id]');
+
+          if (!taskIdElement?.dataset?.taskId) {
+            console.error('Task ID not found');
+
+            return;
+          }
+
+          const taskId = taskIdElement.dataset.taskId;
+
+          const taskInfoApi = await fetchData(taskId);
+          const taskInfo = taskInfoApi?.wholeTaskName;
 
           if (taskInfo) {
             const saveTaskInfo = encodeURIComponent(taskInfo);
