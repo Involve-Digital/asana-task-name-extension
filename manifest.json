@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Asana task name extension",
   "description": "Asana task name extension",
-  "version": "2.5",
+  "version": "2.6",
   "permissions": ["clipboardWrite", "storage"],
   "action": {
     "default_popup": "/popup/hello.html",
@@ -20,7 +20,14 @@
   "content_scripts": [
     {
       "matches": ["*://app.asana.com/*"],
-      "js": ["/scripts/content.js"]
+      "js": [
+        "/scripts/content.js",
+        "/scripts/progressBar.js",
+        "/scripts/mutationHandler.js",
+        "/scripts/listeners.js",
+        "/scripts/buttonUtils.js",
+        "/scripts/api.js"
+      ]
     }
   ],
   "web_accessible_resources": [

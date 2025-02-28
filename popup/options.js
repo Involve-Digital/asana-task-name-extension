@@ -35,6 +35,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  chrome.storage.sync.get("progressBar", function (data) {
+    if (data.progressBar) {
+      document.getElementById("progressBar").checked = data.progressBar;
+    }
+  });
+
   document.getElementById("save").addEventListener("click", function () {
     const togglApiKey = document.getElementById("togglApiKey").value;
     const asanaApiKey = document.getElementById("asanaApiKey").value;
@@ -42,6 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const togglReportButton = document.getElementById("togglReportButton").checked;
     const trackingButton = document.getElementById("trackingButton").checked;
     const crTrackingButton = document.getElementById("crTrackingButton").checked;
+    const progressBar = document.getElementById("progressBar").checked;
 
     chrome.storage.sync.set({
       "togglApiKey": togglApiKey,
@@ -50,6 +57,13 @@ document.addEventListener("DOMContentLoaded", function () {
       "togglReportButton": togglReportButton,
       "trackingButton": trackingButton,
       "crTrackingButton": crTrackingButton,
+      "progressBar": progressBar,
+    });
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.tabs.reload(tabs[0].id);
+      }
     });
   });
 });
