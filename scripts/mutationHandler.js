@@ -25,10 +25,10 @@ const resetObserversAndIntervals = () => {
   }
 };
 
-const handleReactPageUpdate = debounce(() => {
+const handleReactPageUpdate = debounce(async () => {
   console.log('React page update detected.');
   resetObserversAndIntervals();
-  setupObserver();
+  await setupObserver();
 }, 200);
 
 const setupObserver = async () => {
