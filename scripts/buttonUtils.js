@@ -4,7 +4,14 @@ const ICONS_TO_BUTTON = {
   [START_CODE_REVIEW_TRACKING_BUTTON_ID]: 'start-cr',
 }
 
-const appendButton = (elementToAppendButton, id, svg, onClickCallback, title) => {
+const appendButton = (
+  elementToAppendButton,
+  id,
+  svg,
+  onClickCallback,
+  title,
+  childrenToInsertBeforeIndex = 3,
+) => {
   const buttonExists = document.getElementById(id);
   let button = buttonExists;
 
@@ -22,9 +29,9 @@ const appendButton = (elementToAppendButton, id, svg, onClickCallback, title) =>
   button.onclick = (e) => onClickCallback(e);
 
   if (!buttonExists) {
-    const referenceElement = elementToAppendButton.children[3];
+    const referenceElement = elementToAppendButton.children[childrenToInsertBeforeIndex];
 
-    elementToAppendButton.insertBefore(button, referenceElement);
+    elementToAppendButton.insertBefore(button,referenceElement);
   }
 };
 

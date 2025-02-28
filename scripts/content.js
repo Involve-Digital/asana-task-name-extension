@@ -12,43 +12,52 @@ const START_CODE_REVIEW_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-co
 const COPY_TASK_LINK_SELECTOR = 'div.TaskPaneToolbar-copyLinkButton';
 const DEPENDENCIES_SELECTOR = 'div#task_pane_dependencies_label';
 
-const copyTaskInfo = async (shiftPressed, startTracking = false, tags = [], buttonId = null) => {
+const copyTaskInfo = async (
+  shiftPressed,
+  startTracking = false,
+  tags = [],
+  buttonId = null,
+  iconButtonId = null,
+  subTaskId = null,
+) => {
   const copyButton = document.querySelector(COPY_TASK_LINK_SELECTOR);
-  const taskIdElement = document.querySelector('[data-task-id]');
-  let link;
-  let urlParts;
+  let taskId = subTaskId;
 
-  if (taskIdElement?.dataset?.taskId) {
-    urlParts = [taskIdElement.dataset.taskId];
-  }
+  if (!taskId) {
+    const taskIdElement = document.querySelector('[data-task-id]');
+    let link;
+    let urlParts;
 
-  if (!urlParts || !urlParts.length) {
-    copyButton.click();
+    if (taskIdElement?.dataset?.taskId) {
+      urlParts = [taskIdElement.dataset.taskId];
+    }
 
-    try {
-      const clipboardContents = await navigator.clipboard.read();
+    if (!urlParts || !urlParts.length) {
+      copyButton.click();
 
-      if (!clipboardContents.length) {
+      try {
+        const clipboardContents = await navigator.clipboard.read();
+
+        if (!clipboardContents.length) {
+          return;
+        }
+
+        const blob = await clipboardContents[0].getType("text/plain");
+        link = await blob.text();
+        urlParts = link?.replace('/f', '').split('/');
+      } catch (error) {
+        console.error(error); // Log any errors that occur
+
         return;
       }
+    }
 
-      const blob = await clipboardContents[0].getType("text/plain");
-      link = await blob.text();
-      urlParts = link?.replace('/f', '').split('/');
-    } catch (error) {
-      console.error(error); // Log any errors that occur
-
+    if (!urlParts || !urlParts.length) {
       return;
     }
+
+    taskId = urlParts.pop();
   }
-
-  let taskId;
-
-  if (!urlParts || !urlParts.length) {
-    return;
-  }
-
-  taskId = urlParts.pop();
 
   const button = document.getElementById(buttonId || COPY_BUTTON_ID);
 
@@ -84,7 +93,9 @@ const copyTaskInfo = async (shiftPressed, startTracking = false, tags = [], butt
         })
         .finally(() => {
           setTimeout(async function () {
-            const iconName = ICONS_TO_BUTTON[button.id];
+            const idForIcon = iconButtonId ?? button.id
+
+            const iconName = ICONS_TO_BUTTON[idForIcon];
             button.innerHTML = await getSvgIcon(iconName);
           }, 5000);
         });
@@ -157,6 +168,10 @@ const appendTrackingButtons = async (elementToAppendButton) => {
     return;
   }
 
+  const subTaskParents = document.querySelectorAll('.ItemRow.ItemRow--enabled.DraggableItemRow-item.DraggableTaskRow--withMiniIcon.DraggableTaskRow.SubtaskTaskRow.SubtaskTaskRow--withMiniIcon');
+  console.log(subTaskParents);
+  const subTasks = document.querySelectorAll('.SubtaskTaskRow-childContainer');
+
   if (trackingButtonEnabled) {
     appendButton(
       elementToAppendButton,
@@ -165,6 +180,32 @@ const appendTrackingButtons = async (elementToAppendButton) => {
       (e) => copyTaskInfo(e.shiftKey, true, [], START_TRACKING_BUTTON_ID),
       'Start tracking',
     );
+
+    for (const subTaskParent of subTaskParents) {
+      const subTaskId = subTaskParent.dataset.taskId;
+
+      if (subTaskId) {
+        const el = subTaskParent.querySelector('.SubtaskTaskRow-childContainer')
+
+        const newId = START_TRACKING_BUTTON_ID + new Date().toISOString();
+
+        appendButton(
+          el,
+          newId,
+          await getSvgIcon('start'),
+          (e) => copyTaskInfo(
+            e.shiftKey,
+            true,
+            [],
+            newId,
+            START_TRACKING_BUTTON_ID,
+            subTaskId
+          ),
+          'Start tracking',
+          1,
+        );
+      }
+    }
   }
 
   if (crTrackingButtonEnabled) {
@@ -177,6 +218,34 @@ const appendTrackingButtons = async (elementToAppendButton) => {
       },
       'Start Code review tracking',
     );
+
+    for (const subTaskParent of subTaskParents) {
+      const subTaskId = subTaskParent.dataset.taskId;
+
+      if (subTaskId) {
+        const el = subTaskParent.querySelector('.SubtaskTaskRow-childContainer')
+
+        const newId = START_CODE_REVIEW_TRACKING_BUTTON_ID + new Date().toISOString();
+
+        appendButton(
+          el,
+          newId,
+          await getSvgIcon('start-cr'),
+          (e) => {
+            copyTaskInfo(
+              e.shiftKey,
+              true,
+              ['code review'],
+              newId,
+              START_CODE_REVIEW_TRACKING_BUTTON_ID,
+              subTaskId
+            )
+          },
+          'Start Code review tracking',
+          1,
+        );
+      }
+    }
   }
 };
 
