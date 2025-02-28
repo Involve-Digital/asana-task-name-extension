@@ -169,8 +169,6 @@ const appendTrackingButtons = async (elementToAppendButton) => {
   }
 
   const subTaskParents = document.querySelectorAll('.ItemRow.ItemRow--enabled.DraggableItemRow-item.DraggableTaskRow--withMiniIcon.DraggableTaskRow.SubtaskTaskRow.SubtaskTaskRow--withMiniIcon');
-  console.log(subTaskParents);
-  const subTasks = document.querySelectorAll('.SubtaskTaskRow-childContainer');
 
   if (trackingButtonEnabled) {
     appendButton(
