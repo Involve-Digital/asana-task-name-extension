@@ -1,5 +1,3 @@
-const TASK_TITLE_SELECTOR = 'textarea.BaseTextarea.simpleTextarea--dynamic.simpleTextarea.AutogrowTextarea-input';
-const PARENT_TASK_TITLE_SELECTOR = 'div.Breadcrumb.TaskAncestryBreadcrumb.TaskAncestry-taskAncestryBreadcrumb > a';
 const HEADING_SELECTOR = 'div.TaskPaneToolbar.TaskPane-header.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-space-between';
 const ALL_COMMENTS_SELECTOR = 'div.FeedBlockStory.TaskStoryFeed-blockStory';
 const COMMENT_TEXT_DIV_SELECTOR = 'div.RichText3.TruncatedRichText-richText';
@@ -11,173 +9,62 @@ const COPY_BUTTON_ID = 'asana-task-name-extension-copy-button';
 const TOGGL_REPORT_BUTTON_ID = 'asana-task-name-extension-toggl-report-button';
 const START_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-tracking-button';
 const START_CODE_REVIEW_TRACKING_BUTTON_ID = 'asana-task-name-extension-start-code-review-tracking-button';
-const TASK_PROJECT_SELECTOR = 'div.TaskProjectTokenPill-name';
-const TASK_PROJECT_FALLBACK_SELECTOR = 'a.HiddenNavigationLink.TaskAncestry-ancestorProject';
 const COPY_TASK_LINK_SELECTOR = 'div.TaskPaneToolbar-copyLinkButton';
-const BASE_API_URL = 'https://backend.involve.cz/api/v1';
-const TOGGL_REPORT_URL = 'https://track.toggl.com/reports/summary/1033184/description/__taskName__/period/last12Months';
+const DEPENDENCIES_SELECTOR = 'div#task_pane_dependencies_label';
 
-
-const ICONS_TO_BUTTON = {
-  [COPY_BUTTON_ID]: 'copy',
-  [START_TRACKING_BUTTON_ID]: 'start',
-  [START_CODE_REVIEW_TRACKING_BUTTON_ID]: 'start-cr',
-}
-
-function getSvgIcon(name) {
-  const svgPath = chrome.runtime.getURL('icons/' + name + '.svg');
-
-  return fetch(svgPath)
-    .then(response => response.text())
-    .catch(error => {
-      console.error('Error loading SVG:', error);
-
-      return '';
-    });
-}
-
-const handleRunTracking = (apiKey, taskName, project, tags) => {
-  fetch(BASE_API_URL + '/asana-extension/run-tracking', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      apiKey,
-      taskName,
-      project,
-      tags: tags
-    })
-  }).catch(err => console.error(err));
-};
-
-const getTaskInfo = async (apiKey, taskId) => {
-  const response = await fetch(BASE_API_URL + '/asana-extension/task-information', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      apiKey,
-      taskId,
-    })
-  });
-
-  const jsonResponse = await response.json();
-
-  return jsonResponse?.data
-};
-
-function extractTaskInfo(onlyChildTask) {
-  const taskTitleElement = document.querySelector(TASK_TITLE_SELECTOR);
-  const parentTaskElements = document.querySelectorAll(PARENT_TASK_TITLE_SELECTOR);
-
-  if (taskTitleElement) {
-    const taskName = taskTitleElement.textContent.trim();
-    const names = [];
-
-    if (!onlyChildTask) {
-      parentTaskElements.forEach((parent) => {
-        names.push(parent.textContent.trim());
-      });
-    }
-
-    names.push(taskName);
-
-    return names.join(' || ');
-  }
-
-  return null;
-}
-
-function extractTaskProjectName() {
-  const taskProjectElement = document.querySelector(TASK_PROJECT_SELECTOR);
-
-  if (taskProjectElement) {
-    return taskProjectElement.textContent;
-  }
-
-  const taskProjectFallbackElement = document.querySelector(TASK_PROJECT_FALLBACK_SELECTOR);
-
-  if (taskProjectFallbackElement) {
-    return taskProjectFallbackElement.textContent;
-  }
-
-  return null;
-}
-
-chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-  if (message.action === 'copyOnlyTaskName') {
-    copyTaskInfo(true);
-  }
-
-  if (message.action === 'copyTaskNameParentIncluded') {
-    copyTaskInfo(false);
-  }
-});
-
-const fetchData = async (taskId) => {
-  return new Promise((resolve, reject) => {
-    chrome.storage.sync.get('asanaApiKey', async function (data) {
-      if (data.asanaApiKey) {
-        try {
-          const taskInfo = await getTaskInfo(
-            data.asanaApiKey,
-            taskId
-          );
-          resolve(taskInfo);
-        } catch (error) {
-          reject(error);
-        }
-      } else {
-        reject('API Key not found');
-      }
-    });
-  });
-};
-
-const copyTaskInfo = async (shiftPressed, startTracking = false, tags = [], buttonId = null) => {
+const copyTaskInfo = async (
+  shiftPressed,
+  startTracking = false,
+  tags = [],
+  buttonId = null,
+  iconButtonId = null,
+  subTaskId = null,
+) => {
   const copyButton = document.querySelector(COPY_TASK_LINK_SELECTOR);
-  copyButton.click();
-  let link;
-  let urlParts;
+  let taskId = subTaskId;
 
-  try {
-    const clipboardContents = await navigator.clipboard.read();
-
-    if (!clipboardContents.length) {
-      return;
-    }
-
-    const blob = await clipboardContents[0].getType("text/plain");
-    link = await blob.text();
-    urlParts = link?.replace('/f', '').split('/');
-  } catch (error) {
+  if (!taskId) {
     const taskIdElement = document.querySelector('[data-task-id]');
+    let link;
+    let urlParts;
 
-    if (!taskIdElement?.dataset?.taskId) {
-      console.error(error); // Log any errors that occur
+    if (taskIdElement?.dataset?.taskId) {
+      urlParts = [taskIdElement.dataset.taskId];
+    }
 
+    if (!urlParts || !urlParts.length) {
+      copyButton.click();
+
+      try {
+        const clipboardContents = await navigator.clipboard.read();
+
+        if (!clipboardContents.length) {
+          return;
+        }
+
+        const blob = await clipboardContents[0].getType("text/plain");
+        link = await blob.text();
+        urlParts = link?.replace('/f', '').split('/');
+      } catch (error) {
+        console.error(error); // Log any errors that occur
+
+        return;
+      }
+    }
+
+    if (!urlParts || !urlParts.length) {
       return;
     }
 
-    urlParts = [taskIdElement.dataset.taskId];
+    taskId = urlParts.pop();
   }
-
-  let taskId;
-
-  if (!urlParts || !urlParts.length) {
-    return;
-  }
-
-  taskId = urlParts.pop();
 
   const button = document.getElementById(buttonId || COPY_BUTTON_ID);
 
   try {
     button.innerHTML = await getSvgIcon('loader');
 
-    const taskInfoApi = await fetchData(taskId);
+    const taskInfoApi = await getTaskInfo(taskId);
     let taskInfo;
 
     if (shiftPressed) {
@@ -187,13 +74,9 @@ const copyTaskInfo = async (shiftPressed, startTracking = false, tags = [], butt
     }
 
     if (taskInfoApi && startTracking) {
-      chrome.storage.sync.get('togglApiKey', function (data) {
-        if (data.togglApiKey) {
-          const project = taskInfoApi.project;
-          const taskInfo = taskInfoApi.wholeTaskName;
-          handleRunTracking(data.togglApiKey, taskInfo, project, tags);
-        }
-      });
+      const project = taskInfoApi.project;
+      const taskInfo = taskInfoApi.wholeTaskName;
+      await handleRunTracking(taskInfo, project, tags);
     }
 
     if (taskInfo) {
@@ -210,7 +93,9 @@ const copyTaskInfo = async (shiftPressed, startTracking = false, tags = [], butt
         })
         .finally(() => {
           setTimeout(async function () {
-            const iconName = ICONS_TO_BUTTON[button.id];
+            const idForIcon = iconButtonId ?? button.id
+
+            const iconName = ICONS_TO_BUTTON[idForIcon];
             button.innerHTML = await getSvgIcon(iconName);
           }, 5000);
         });
@@ -224,112 +109,146 @@ const copyTaskInfo = async (shiftPressed, startTracking = false, tags = [], butt
 
 /** @param {Node} elementToAppendButton */
 const appendCopyButton = async (elementToAppendButton) => {
-  chrome.storage.sync.get('copyButton', async function (data) {
-    if (data.copyButton) {
-      appendButton(
-        elementToAppendButton,
-        COPY_BUTTON_ID,
-        await getSvgIcon('copy'),
-        (e) => copyTaskInfo(e.shiftKey, false, [], COPY_BUTTON_ID),
-        'Copy task name',
-      );
-    }
-  });
+  const copyButtonEnabled = await getDataFromChromeStorage('copyButton');
+
+  if (copyButtonEnabled) {
+    appendButton(
+      elementToAppendButton,
+      COPY_BUTTON_ID,
+      await getSvgIcon('copy'),
+      (e) => copyTaskInfo(e.shiftKey, false, [], COPY_BUTTON_ID),
+      'Copy task name',
+    );
+  }
 };
 
 /** @param {Node} elementToAppendButton */
 const appendToggleButton = async (elementToAppendButton) => {
-  chrome.storage.sync.get('togglReportButton', async function (data) {
-    if (data.togglReportButton) {
-      appendButton(
-        elementToAppendButton,
-        TOGGL_REPORT_BUTTON_ID,
-        await getSvgIcon('analysis'),
-        async (e) => {
-          const taskIdElement = document.querySelector('[data-task-id]');
+  const togglReportButtonEnabled = await getDataFromChromeStorage('togglReportButton');
 
-          if (!taskIdElement?.dataset?.taskId) {
-            console.error('Task ID not found');
+  if (togglReportButtonEnabled) {
+    appendButton(
+      elementToAppendButton,
+      TOGGL_REPORT_BUTTON_ID,
+      await getSvgIcon('analysis'),
+      async (e) => {
+        const taskIdElement = document.querySelector('[data-task-id]');
 
-            return;
-          }
+        if (!taskIdElement?.dataset?.taskId) {
+          console.error('Task ID not found');
 
-          const taskId = taskIdElement.dataset.taskId;
+          return;
+        }
 
-          const taskInfoApi = await fetchData(taskId);
-          const taskInfo = taskInfoApi?.wholeTaskName;
+        const taskId = taskIdElement.dataset.taskId;
 
-          if (taskInfo) {
-            const saveTaskInfo = encodeURIComponent(taskInfo);
+        const taskInfoApi = await getTaskInfo(taskId);
+        const taskInfo = taskInfoApi?.wholeTaskName;
 
-            const url = TOGGL_REPORT_URL.replace('__taskName__', saveTaskInfo);
+        if (taskInfo) {
+          const saveTaskInfo = encodeURIComponent(taskInfo);
 
-            window.open(url, '_blank');
-          }
-        },
-        'See report in Toggl',
-      );
-    }
-  });
+          const url = TOGGL_REPORT_URL.replace('__taskName__', saveTaskInfo);
+
+          window.open(url, '_blank');
+        }
+      },
+      'See report in Toggl',
+    );
+  }
 };
 
 /** @param {Node} elementToAppendButton */
-const appendTrackingButtons = (elementToAppendButton) => {
-  chrome.storage.sync.get('togglApiKey', async function (data) {
-    if (data.togglApiKey) {
-      chrome.storage.sync.get('trackingButton', async function (data) {
-        if (data.trackingButton) {
-          appendButton(
-            elementToAppendButton,
+const appendTrackingButtons = async (elementToAppendButton) => {
+  const togglApiKey = await getDataFromChromeStorage('togglApiKey');
+  const trackingButtonEnabled = await getDataFromChromeStorage('trackingButton');
+  const crTrackingButtonEnabled = await getDataFromChromeStorage('crTrackingButton');
+
+  if (!togglApiKey) {
+    return;
+  }
+
+  const subTaskParents = document.querySelectorAll('.ItemRow.ItemRow--enabled.DraggableItemRow-item.DraggableTaskRow--withMiniIcon.DraggableTaskRow.SubtaskTaskRow.SubtaskTaskRow--withMiniIcon');
+
+  if (trackingButtonEnabled) {
+    appendButton(
+      elementToAppendButton,
+      START_TRACKING_BUTTON_ID,
+      await getSvgIcon('start'),
+      (e) => copyTaskInfo(e.shiftKey, true, [], START_TRACKING_BUTTON_ID),
+      'Start tracking',
+    );
+
+    for (const subTaskParent of subTaskParents) {
+      const subTaskId = subTaskParent.dataset.taskId;
+
+      if (subTaskId) {
+        const el = subTaskParent.querySelector('.SubtaskTaskRow-childContainer')
+
+        const newId = START_TRACKING_BUTTON_ID + new Date().toISOString();
+
+        appendButton(
+          el,
+          newId,
+          await getSvgIcon('start'),
+          (e) => copyTaskInfo(
+            e.shiftKey,
+            true,
+            [],
+            newId,
             START_TRACKING_BUTTON_ID,
-            await getSvgIcon('start'),
-            (e) => copyTaskInfo(e.shiftKey, true, [], START_TRACKING_BUTTON_ID),
-            'Start tracking',
-          );
-        }
-      });
-
-      chrome.storage.sync.get('crTrackingButton', async function (data) {
-        if (data.crTrackingButton) {
-          appendButton(
-            elementToAppendButton,
-            START_CODE_REVIEW_TRACKING_BUTTON_ID,
-            await getSvgIcon('start-cr'),
-            (e) => copyTaskInfo(e.shiftKey, true, ['code review'], START_CODE_REVIEW_TRACKING_BUTTON_ID),
-            'Start Code review tracking',
-          );
-        }
-      });
+            subTaskId
+          ),
+          'Start tracking',
+          1,
+        );
+      }
     }
-  });
-};
-
-const appendButton = (elementToAppendButton, id, svg, onClickCallback, title) => {
-  const buttonExists = document.getElementById(id);
-  let button = buttonExists;
-
-  if (!button) {
-    button = document.createElement('button');
   }
 
-  button.id = id;
-  button.innerHTML = svg;
+  if (crTrackingButtonEnabled) {
+    appendButton(
+      elementToAppendButton,
+      START_CODE_REVIEW_TRACKING_BUTTON_ID,
+      await getSvgIcon('start-cr'),
+      (e) => {
+        copyTaskInfo(e.shiftKey, true, ['code review'], START_CODE_REVIEW_TRACKING_BUTTON_ID)
+      },
+      'Start Code review tracking',
+    );
 
-  if (title) {
-    button.title = title;
-  }
+    for (const subTaskParent of subTaskParents) {
+      const subTaskId = subTaskParent.dataset.taskId;
 
-  button.onclick = (e) => onClickCallback(e);
+      if (subTaskId) {
+        const el = subTaskParent.querySelector('.SubtaskTaskRow-childContainer')
 
-  if (!buttonExists) {
-    const referenceElement = elementToAppendButton.children[3];
+        const newId = START_CODE_REVIEW_TRACKING_BUTTON_ID + new Date().toISOString();
 
-    elementToAppendButton.insertBefore(button, referenceElement);
+        appendButton(
+          el,
+          newId,
+          await getSvgIcon('start-cr'),
+          (e) => {
+            copyTaskInfo(
+              e.shiftKey,
+              true,
+              ['code review'],
+              newId,
+              START_CODE_REVIEW_TRACKING_BUTTON_ID,
+              subTaskId
+            )
+          },
+          'Start Code review tracking',
+          1,
+        );
+      }
+    }
   }
 };
 
 /** @param {MutationRecord} mutation */
-const addCopyButtonAfterMutation = (mutation) => {
+const addCopyButtonAfterMutation = async (mutation) => {
   const matchingElementsForCopyButton = Array.from(mutation.addedNodes)
     .filter(addedNode => typeof addedNode.querySelector === 'function')
     .map(addedNode => addedNode.querySelector(HEADING_SELECTOR))
@@ -342,6 +261,8 @@ const addCopyButtonAfterMutation = (mutation) => {
   matchingElementsForCopyButton.forEach(appendCopyButton);
   matchingElementsForCopyButton.forEach(appendTrackingButtons);
   matchingElementsForCopyButton.forEach(appendToggleButton);
+
+  await appendProgressBar();
 };
 
 /** @param {MutationRecord} mutation */
@@ -352,24 +273,6 @@ const checkComments = (mutation) => {
 
   pinToTop();
 };
-
-/** @param {MutationRecord[]} mutations */
-const handleBodyMutation = (mutations) => {
-  mutations.forEach((mutation) => {
-    addCopyButtonAfterMutation(mutation);
-    checkComments(mutation);
-  });
-};
-
-// Extract task info and send to background script when page is loaded
-window.addEventListener('load', () => {
-  const observer = new MutationObserver(handleBodyMutation);
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-});
 
 function pinToTop() {
   const allComments = document.querySelectorAll(ALL_COMMENTS_SELECTOR);
@@ -400,7 +303,9 @@ function pinToTop() {
             pinToTop.click();
           }
 
-          commentButtonDiv.click();
+          setTimeout(() => {
+            commentButtonDiv.click();
+          }, 10)
         }, 1);
       }
     }
