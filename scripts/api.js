@@ -1,4 +1,4 @@
-const BASE_API_URL = 'https://involve-backend.local/api/v1';
+const BASE_API_URL = 'https://backend.involve.cz/api/v1';
 const TOGGL_REPORT_URL = 'https://track.toggl.com/reports/summary/1033184/description/__taskName__/period/last12Months';
 
 const handleRunTracking = async (taskName, project, tags) => {
