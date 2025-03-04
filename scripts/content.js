@@ -24,7 +24,7 @@ const copyTaskInfo = async (
   let taskId = subTaskId;
 
   if (!taskId) {
-    const taskIdElement = document.querySelector('[data-task-id]');
+    const taskIdElement = document.querySelector('#TaskPrintView[data-task-id]');
     let link;
     let urlParts;
 
