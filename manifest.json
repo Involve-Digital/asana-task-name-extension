@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Asana task name extension",
   "description": "Asana task name extension",
-  "version": "2.8",
+  "version": "2.9",
   "permissions": ["clipboardWrite", "storage"],
   "action": {
     "default_popup": "/popup/hello.html",

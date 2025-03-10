@@ -22,7 +22,7 @@ const appendProgressBar = async () => {
     return;
   }
 
-  const taskIdElement = document.querySelector('[data-task-id]');
+  const taskIdElement = document.querySelector('#TaskPrintView[data-task-id]');
 
   if (!taskIdElement?.dataset?.taskId) {
     return;
