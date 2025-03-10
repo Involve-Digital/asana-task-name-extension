@@ -2,7 +2,7 @@ const HEADING_SELECTOR = 'div.TaskPaneToolbar.TaskPane-header.Stack.Stack--align
 const ALL_COMMENTS_SELECTOR = 'div.FeedBlockStory.TaskStoryFeed-blockStory';
 const COMMENT_TEXT_DIV_SELECTOR = 'div.RichText3.TruncatedRichText-richText';
 const COMMENT_BUTTON_DIV_SELECTOR = 'div.FeedBlockStory-actionsDropdownButton';
-const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentation--overflowTruncate.TypographyPresentation--medium.LeftIconItemStructure-label';
+const PIN_TO_TOP_BUTTON_SELECTOR = '.TypographyPresentation.TypographyPresentation--overflowTruncate.TypographyPresentation--medium.MenuItemThemeablePresentation-main.HighlightSol.HighlightSol--buildingBlock';
 const COMMENT_SECTION_CLASS_NAME = 'TaskStoryFeed';
 const MR_DELIMITERS = ['MR: ', 'MR - '];
 const COPY_BUTTON_ID = 'asana-task-name-extension-copy-button';
@@ -303,9 +303,9 @@ function pinToTop() {
             pinToTop.click();
           }
 
-          setTimeout(() => {
+          if (pinToTop && pinToTop.textContent === 'Unpin from top') {
             commentButtonDiv.click();
-          }, 10)
+          }
         }, 1);
       }
     }
