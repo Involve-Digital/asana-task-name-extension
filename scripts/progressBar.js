@@ -67,6 +67,6 @@ const appendProgressBar = async () => {
             }
           }
         });
-    }, 60000);
+    }, 1200000);
   }
 };
