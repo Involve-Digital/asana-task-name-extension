@@ -1,4 +1,4 @@
-const HEADING_SELECTOR = 'div.TaskPaneToolbar.TaskPane-header.Stack.Stack--align-center.Stack--direction-row.Stack--display-block.Stack--justify-space-between';
+const HEADING_SELECTOR = 'div.TaskPane.Stack_spacer_618416852.Box_box_1242503546.Stack_align-stretch_618416852.Stack_direction-column_618416852.Stack_display-block_618416852.Stack_justify-start_618416852.HighlightSol.HighlightSol--buildingBlock';
 const ALL_COMMENTS_SELECTOR = 'div.FeedBlockStory.TaskStoryFeed-blockStory';
 const COMMENT_TEXT_DIV_SELECTOR = 'div.RichText3.TruncatedRichText-richText';
 const COMMENT_BUTTON_DIV_SELECTOR = 'div.FeedBlockStory-actionsDropdownButton';
@@ -258,9 +258,18 @@ const addCopyButtonAfterMutation = async (mutation) => {
     return;
   }
 
-  matchingElementsForCopyButton.forEach(appendCopyButton);
-  matchingElementsForCopyButton.forEach(appendTrackingButtons);
-  matchingElementsForCopyButton.forEach(appendToggleButton);
+  const els = matchingElementsForCopyButton.map((el) => {
+    const newEl = document.createElement('div')
+    newEl.style.justifyContent = 'center'
+    newEl.style.display = 'flex'
+    el.prepend(newEl);
+
+    return newEl
+  });
+
+  els.forEach(appendCopyButton);
+  els.forEach(appendTrackingButtons);
+  els.forEach(appendToggleButton);
 
   await appendProgressBar();
 };
