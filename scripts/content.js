@@ -1,4 +1,4 @@
-const HEADING_SELECTOR = 'div.TaskPane.Stack_spacer_618416852.Box_box_1242503546.Stack_align-stretch_618416852.Stack_direction-column_618416852.Stack_display-block_618416852.Stack_justify-start_618416852.HighlightSol.HighlightSol--buildingBlock';
+const HEADING_SELECTOR = 'div#TaskPrintView';
 const ALL_COMMENTS_SELECTOR = 'div.FeedBlockStory.TaskStoryFeed-blockStory';
 const COMMENT_TEXT_DIV_SELECTOR = 'div.RichText3.TruncatedRichText-richText';
 const COMMENT_BUTTON_DIV_SELECTOR = 'div.FeedBlockStory-actionsDropdownButton';

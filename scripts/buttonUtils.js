@@ -31,7 +31,11 @@ const appendButton = (
   if (!buttonExists) {
     const referenceElement = elementToAppendButton.children[childrenToInsertBeforeIndex];
 
-    elementToAppendButton.insertBefore(button,referenceElement);
+    if (referenceElement){
+      elementToAppendButton.insertBefore(button,referenceElement);
+    }else {
+      elementToAppendButton.prepend(button);
+    }
   }
 };
 
